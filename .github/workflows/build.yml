@@ -1,0 +1,38 @@
+name: Build and test app in NCS docker container
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: pebble-nordic
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Setup Zephyr project
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: pebble-nordic
+          toolchains: arm-zephyr-eabi
+
+      - name: Build firmware
+        working-directory: pebble-nordic
+        run: |
+          west twister -T app -v --inline-logs --integration
+
+      - name: Store hex files
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-applications
+          path: pebble-nordic/twister-out/**/*.hex

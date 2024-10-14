@@ -1,0 +1,5 @@
+description: Renesas DA7212 Audio Coded
+
+compatible: "renesas,da7212"
+
+include: i2c-device.yaml

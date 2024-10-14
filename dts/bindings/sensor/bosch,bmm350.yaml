@@ -1,0 +1,11 @@
+description: Bosch BMM350 Geomagnetic sensor
+
+compatible: "bosch,bmm350"
+
+include: ["sensor-device.yaml", "i2c-device.yaml"]
+
+properties:
+  int-gpios:
+    type: phandle-array
+    description: |
+      Interrupt output pin

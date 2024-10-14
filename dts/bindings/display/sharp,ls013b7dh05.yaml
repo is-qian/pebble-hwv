@@ -1,0 +1,18 @@
+description: Sharp LS013B7DH05 LCD Module
+
+compatible: "sharp,ls013b7dh05"
+
+include: ["display-controller.yaml", "spi-device.yaml"]
+
+properties:
+  disp-gpios:
+    type: phandle-array
+    description: Display ON/OFF GPIO
+
+  extcomin-gpios:
+    type: phandle-array
+    description: Display EXTCOMIN GPIO
+
+  backlight:
+    type: phandle
+    description: Backlight controller

@@ -1,0 +1,289 @@
+/dts-v1/;
+
+#include <nordic/nrf5340_cpuapp_qkaa.dtsi>
+#include "pebble_evb_nrf5340_cpuapp-pinctrl.dtsi"
+
+/ {
+	model = "Pebble EVB Application";
+	compatible = "pebble,pebble-evb-cpuapp";
+
+	chosen {
+		zephyr,sram = &sram0_image;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,bt-hci = &bt_hci_ipc0;
+	};
+
+	aliases {
+		accel0 = &lsm6dso;
+		button0 = &button1;
+		gyro0 = &lsm6dso;
+		led0 = &npm1300_led;
+		light0 = &opt3001;
+		light1 = &als_pt19;
+		mag0 = &bmm350;
+		press0 = &bmp390;
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+		button1: button_1 {
+			gpios = <&gpio1 0 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Push button 1";
+			zephyr,code = <INPUT_KEY_1>;
+		};
+		button2: button_2 {
+			gpios = <&gpio0 5 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Push button 2";
+			zephyr,code = <INPUT_KEY_2>;
+		};
+		button3: button_3 {
+			gpios = <&gpio0 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Push button 3";
+			zephyr,code = <INPUT_KEY_3>;
+		};
+		button4: button_0 {
+			gpios = <&gpio0 7 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Push button 4";
+			zephyr,code = <INPUT_KEY_4>;
+		};
+	};
+
+	als_pt19: light-sensor {
+		compatible = "analog-light-sensor";
+		io-channels = <&adc 0>;
+	};
+
+	lm3508: backlight {
+		compatible = "ti,lm3508";
+		en-gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+		pwms = <&pwm0 0 PWM_KHZ(20) PWM_POLARITY_NORMAL>;
+	};
+};
+
+&adc {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/* configuration suitable for light sensor measurements (<=1.8V)
+	 * ADC range when using internal ref = (0.0V - 0.6V)
+	 */
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1_3";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN1>;
+		zephyr,resolution = <12>;
+	};
+};
+
+&gpiote {
+	status = "okay";
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&pwm0 {
+	status = "okay";
+	pinctrl-0 = <&pwm0_default>;
+	pinctrl-1 = <&pwm0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&i2c1 {
+	compatible = "nordic,nrf-twim";
+	status = "okay";
+	pinctrl-0 = <&i2c1_default>;
+	pinctrl-1 = <&i2c1_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	npm1300: pmic@6b {
+		compatible = "nordic,npm1300";
+		reg = <0x6b>;
+		pmic-int-pin = <1>;
+		host-int-gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+
+		npm1300_gpio: gpio-controller {
+			compatible = "nordic,npm1300-gpio";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <5>;
+		};
+
+		regulators {
+			compatible = "nordic,npm1300-regulator";
+
+			buck_1v8: BUCK1 {
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			buck_3v0: BUCK2 {
+				regulator-min-microvolt = <3000000>;
+				regulator-max-microvolt = <3000000>;
+			};
+
+			ldo_2v0: LDO1 {
+				regulator-min-microvolt = <2000000>;
+				regulator-max-microvolt = <2000000>;
+			};
+
+			ldo_1v8: LDO2 {
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+		};
+
+		npm1300_led: leds {
+			compatible = "nordic,npm1300-led";
+			nordic,led0-mode = "host";
+			nordic,led1-mode = "host";
+			nordic,led2-mode = "host";
+		};
+	};
+};
+
+&i2c2 {
+	compatible = "nordic,nrf-twim";
+	status = "okay";
+	pinctrl-0 = <&i2c2_default>;
+	pinctrl-1 = <&i2c2_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	bmm350: magnetic-sensor@14 {
+		compatible = "bosch,bmm350";
+		reg = <0x14>;
+		int-gpios = <&gpio0 25 GPIO_ACTIVE_HIGH>;
+	};
+
+	da7212: audio-codec@1a {
+		compatible = "renesas,da7212";
+		reg = <0x1a>;
+	};
+
+	opt3001: light-sensor@44 {
+		compatible = "ti,opt3001";
+		reg = <0x44>;
+	};
+
+	drv2604: haptic@5a {
+		compatible = "ti,drv2604";
+		reg = <0x5a>;
+		en-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&i2s0 {
+	compatible = "nordic,nrf-i2s";
+	status = "okay";
+	pinctrl-0 = <&i2s0_default>;
+	pinctrl-1 = <&i2s0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&qspi {
+	status = "okay";
+	pinctrl-0 = <&qspi_default>;
+	pinctrl-1 = <&qspi_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	gd25lb255e: memory@0 {
+		compatible = "nordic,qspi-nor";
+		reg = <0>;
+		writeoc = "pp4io";
+		readoc = "read4io";
+		sck-frequency = <8000000>;
+		/* TODO: GRAB REAL */
+		jedec-id = [c8 28 17];
+		sfdp-bfp = [
+			e5 20 f1 ff  ff ff ff 03  44 eb 08 6b  08 3b 04 bb
+			ee ff ff ff  ff ff 00 ff  ff ff 00 ff  0c 20 0f 52
+			10 d8 00 ff  23 72 f5 00  82 ed 04 cc  44 83 68 44
+			30 b0 30 b0  f7 c4 d5 5c  00 be 29 ff  f0 d0 ff ff
+		];
+		size = <DT_SIZE_M(32)>;
+		has-dpd;
+		t-enter-dpd = <3000>;
+		t-exit-dpd = <20000>;
+	};
+};
+
+&spi3 {
+	compatible = "nordic,nrf-spim";
+	status = "okay";
+	cs-gpios = <&gpio0 27 GPIO_ACTIVE_LOW>, <&gpio0 28 GPIO_ACTIVE_LOW>;
+	pinctrl-0 = <&spi3_default>;
+	pinctrl-1 = <&spi3_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	bmp390: pressure-sensor@0 {
+		compatible = "bosch,bmp390";
+		reg = <0x0>;
+		int-gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+	};
+
+	lsm6dso: imu-sensor@1 {
+		compatible = "st,lsm6dso";
+		reg = <0x1>;
+		irq-gpios = <&gpio0 23 GPIO_ACTIVE_HIGH>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+	};
+};
+
+&spi4 {
+	compatible = "nordic,nrf-spim";
+	status = "okay";
+	cs-gpios = <&gpio0 21 GPIO_ACTIVE_LOW>;
+	pinctrl-0 = <&spi4_default>;
+	pinctrl-1 = <&spi4_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	ls013b7dh05: display@0 {
+		compatible = "sharp,ls013b7dh05";
+		reg = <0x0>;
+		disp-gpios = <&gpio0 22 GPIO_ACTIVE_HIGH>;
+		extcomin-gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+		spi-max-frequency = <DT_FREQ_M(1)>;
+		backlight = <&lm3508>;
+		height = <168>;
+		width = <144>;
+	};
+};
+
+&uart0 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart0_default>;
+	pinctrl-1 = <&uart0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&vregh {
+	status = "okay";
+};
+
+&vregmain {
+	regulator-initial-mode = <NRF5X_REG_MODE_DCDC>;
+};
+
+&vregradio {
+	regulator-initial-mode = <NRF5X_REG_MODE_DCDC>;
+};
+
+zephyr_udc0: &usbd {
+	compatible = "nordic,nrf-usbd";
+	status = "okay";
+};
+
+#include <common/nordic/nrf5340_cpuapp_partition.dtsi>
+#include <common/nordic/nrf5340_shared_sram_partition.dtsi>

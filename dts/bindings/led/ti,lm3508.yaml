@@ -1,0 +1,15 @@
+description: TI LM3508 LED driver
+
+compatible: "ti,lm3508"
+
+include: base.yaml
+
+properties:
+  en-gpios:
+    type: phandle-array
+    description: Enable GPIO
+
+  pwms:
+    type: phandle-array
+    required: true
+    description: PWM channel for the LED driver

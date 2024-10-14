@@ -1,0 +1,10 @@
+identifier: pebble_evb/nrf5340/cpuapp
+name: PEBBLE-EVB-CPUAPP
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+ram: 448
+flash: 1024
+supported: []
+vendor: pebble

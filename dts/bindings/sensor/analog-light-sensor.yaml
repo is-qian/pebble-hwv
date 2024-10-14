@@ -1,0 +1,12 @@
+description: Analog light sensor
+
+compatible: "analog-light-sensor"
+
+include: base.yaml
+
+properties:
+  io-channels:
+    required: true
+    type: phandle-array
+    description: |
+      ADC specifier for light sensor output.

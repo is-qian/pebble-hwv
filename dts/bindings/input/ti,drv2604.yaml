@@ -1,0 +1,10 @@
+description: TI DRV2604 Haptic Driver for ERM and LRA
+
+compatible: "ti,drv2604"
+
+include: base.yaml
+
+properties:
+  en-gpios:
+    type: phandle-array
+    description: Enable GPIO
