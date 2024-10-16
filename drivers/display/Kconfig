@@ -1,0 +1,9 @@
+menuconfig DISPLAY_EXTERNAL
+	bool "Display drivers (external)"
+	default y if DISPLAY
+
+if DISPLAY_EXTERNAL
+
+rsource "Kconfig.ls013b7dh05"
+
+endif # DISPLAY_EXTERNAL

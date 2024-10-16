@@ -1,0 +1,2 @@
+zephyr_library_amend()
+zephyr_library_sources_ifdef(CONFIG_DISPLAY_LS013B7DH05 display_ls013b7dh05.c)
