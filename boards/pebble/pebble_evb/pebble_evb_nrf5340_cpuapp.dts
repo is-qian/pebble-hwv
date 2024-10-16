@@ -191,6 +191,13 @@
 	pinctrl-names = "default", "sleep";
 };
 
+&pwm1 {
+	status = "okay";
+	pinctrl-0 = <&pwm1_default>;
+	pinctrl-1 = <&pwm1_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
 &qspi {
 	status = "okay";
 	pinctrl-0 = <&qspi_default>;
@@ -252,7 +259,8 @@
 		compatible = "sharp,ls013b7dh05";
 		reg = <0x0>;
 		disp-gpios = <&gpio0 22 GPIO_ACTIVE_HIGH>;
-		extcomin-gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+		pwms = <&pwm1 0 PWM_HZ(120) PWM_POLARITY_NORMAL>;
+		pwm-names = "extcomin";
 		spi-max-frequency = <DT_FREQ_M(1)>;
 		backlight = <&lm3508>;
 		height = <168>;

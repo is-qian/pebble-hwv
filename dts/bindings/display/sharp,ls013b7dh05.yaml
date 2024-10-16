@@ -9,9 +9,13 @@ properties:
     type: phandle-array
     description: Display ON/OFF GPIO
 
-  extcomin-gpios:
+  pwms:
     type: phandle-array
-    description: Display EXTCOMIN GPIO
+    description: Display EXTCOMIN PWM
+
+  pwm-names:
+    type: string-array
+    description: Display EXTCOMIN PWM names
 
   backlight:
     type: phandle
