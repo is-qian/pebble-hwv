@@ -15,5 +15,6 @@ manifest:
           - libmetal
           - nrfxlib
           - open-amp
+          - segger
           - tinycrypt
           - zephyr
