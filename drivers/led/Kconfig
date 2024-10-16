@@ -1,0 +1,9 @@
+menuconfig LED_EXTERNAL
+	bool "LED drivers (external)"
+	default y if LED
+
+if LED_EXTERNAL
+
+rsource "Kconfig.lm3508"
+
+endif # LED_EXTERNAL

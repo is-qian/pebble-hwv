@@ -1,0 +1,15 @@
+config LED_LM3508
+	bool "TI LM3508 LED controller"
+	depends on DT_HAS_TI_LM3508_ENABLED
+	select GPIO
+	select PWM
+	default y
+	help
+	  Driver for the TI LM3508 LED controller
+
+config LED_LM3508_INIT_PRIORITY
+	int "LM3508 Initialization priority"
+	default 80
+	depends on LED_LM3508
+	help
+	  Initialization priority for the LM3508 driver

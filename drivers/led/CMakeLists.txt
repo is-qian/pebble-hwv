@@ -1,0 +1,2 @@
+zephyr_library_amend()
+zephyr_library_sources_ifdef(CONFIG_LED_LM3508 led_lm3508.c)
