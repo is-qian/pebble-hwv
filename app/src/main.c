@@ -3,6 +3,7 @@
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
+#include <zephyr/drivers/display.h>
 #include <zephyr/drivers/led.h>
 #include <zephyr/kernel.h>
 #include <zephyr/input/input.h>
@@ -23,9 +24,23 @@ static const struct bt_data sd[] = {
 	BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_LBS_VAL),
 };
 
+static const struct device *const disp = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 static const struct device *const led = DEVICE_DT_GET(DT_ALIAS(led0));
 
 static bool button_state;
+
+#define DISP_WIDTH  DT_PROP(DT_CHOSEN(zephyr_display), width)
+#define DISP_HEIGHT DT_PROP(DT_CHOSEN(zephyr_display), height)
+static uint8_t disp_buf[DISP_WIDTH * DISP_HEIGHT / 8];
+
+static void draw_filled_rect(uint8_t *buf, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
+{
+	for (size_t row = y0; row <= y1; row++) {
+		for (size_t col = x0; col <= x1; col++) {
+			buf[row * DISP_WIDTH / 8 + col / 8] |= 1 << (col % 8);
+		}
+	}
+}
 
 static void connected(struct bt_conn *conn, uint8_t err)
 {
@@ -84,8 +99,42 @@ static struct bt_lbs_cb lbs_callbacks = {
 int main(void)
 {
 	int err;
+	struct display_buffer_descriptor desc = {
+		.buf_size = sizeof(disp_buf),
+		.width = DISP_WIDTH,
+		.height = DISP_HEIGHT,
+		.pitch = DISP_WIDTH,
+	};
 
 	LOG_INF("Pebble Application %s", APP_VERSION_STRING);
+
+	if (!device_is_ready(disp)) {
+		LOG_ERR("Display device not ready");
+		return 0;
+	}
+
+	err = display_blanking_off(disp);
+	if (err < 0) {
+		LOG_ERR("Failed to turn on display (%d)", err);
+		return 0;
+	}
+
+	draw_filled_rect(disp_buf, 16, 16, DISP_WIDTH - 16, DISP_HEIGHT - 16);
+	err = display_write(disp, 0, 0, &desc, disp_buf);
+	if (err < 0) {
+		LOG_ERR("Failed to write to display (%d)", err);
+		return 0;
+	}
+
+	for (int8_t i = 100; i >= 0; i -= 10) {
+		err = display_set_brightness(disp, (uint8_t)i);
+		if (err < 0) {
+			LOG_ERR("Failed to set brightness (%d)", err);
+			return 0;
+		}
+
+		k_msleep(100);
+	}
 
 	if (!device_is_ready(led)) {
 		LOG_ERR("LED device not ready");
