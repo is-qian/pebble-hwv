@@ -39,7 +39,7 @@ static int lm3508_off(const struct device *dev, uint32_t led)
 		return ret;
 	}
 
-	return 0;
+	return pwm_set_pulse_dt(&config->pwm, 0U);
 }
 
 static int lm3508_set_brightness(const struct device *dev, uint32_t led, uint8_t brightness)
