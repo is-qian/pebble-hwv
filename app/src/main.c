@@ -27,8 +27,10 @@ static const struct bt_data sd[] = {
 static const struct device *const disp = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 static const struct device *const buttons = DEVICE_DT_GET(DT_NODELABEL(buttons));
 static const struct device *const led = DEVICE_DT_GET(DT_ALIAS(led0));
+static const struct device *const tap = DEVICE_DT_GET(DT_ALIAS(tap0));
 
 static bool button_state;
+static bool tap_led_state;
 
 #define DISP_WIDTH  DT_PROP(DT_CHOSEN(zephyr_display), width)
 #define DISP_HEIGHT DT_PROP(DT_CHOSEN(zephyr_display), height)
@@ -67,7 +69,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 	.disconnected = disconnected,
 };
 
-static void input_cb(struct input_event *evt, void *user_data)
+static void buttons_input_cb(struct input_event *evt, void *user_data)
 {
 	ARG_UNUSED(user_data);
 
@@ -76,7 +78,7 @@ static void input_cb(struct input_event *evt, void *user_data)
 	(void)bt_lbs_send_button_state(button_state);
 }
 
-INPUT_CALLBACK_DEFINE(buttons, input_cb, NULL);
+INPUT_CALLBACK_DEFINE(buttons, buttons_input_cb, NULL);
 
 static void led_cb(bool led_state)
 {
@@ -96,6 +98,21 @@ static struct bt_lbs_cb lbs_callbacks = {
 	.led_cb = led_cb,
 	.button_cb = button_cb,
 };
+
+static void tap_input_cb(struct input_event *evt, void *user_data)
+{
+	ARG_UNUSED(user_data);
+
+	tap_led_state = !tap_led_state;
+
+	if (tap_led_state) {
+		(void)led_on(led, 2);
+	} else {
+		(void)led_off(led, 2);
+	}
+}
+
+INPUT_CALLBACK_DEFINE(tap, tap_input_cb, NULL);
 
 int main(void)
 {
@@ -139,6 +156,11 @@ int main(void)
 
 	if (!device_is_ready(led)) {
 		LOG_ERR("LED device not ready");
+		return 0;
+	}
+
+	if (!device_is_ready(tap)) {
+		LOG_ERR("Tap device not ready");
 		return 0;
 	}
 
