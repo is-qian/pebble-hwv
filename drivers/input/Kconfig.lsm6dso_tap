@@ -1,0 +1,11 @@
+config INPUT_LSM6DSO_TAP
+	bool "LSM6DSO (TAP depection) driver"
+	default y
+	depends on DT_HAS_ST_LSM6DSO_TAP_ENABLED
+	depends on ZEPHYR_HAL_ST_MODULE
+	select SPI
+	select GPIO
+	select HAS_STMEMSC
+	select USE_STDC_LSM6DSO
+	help
+	  Enable driver for LSM6DSO (tap detection driver)

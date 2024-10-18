@@ -1,4 +1,5 @@
 menu "Drivers"
 rsource "led/Kconfig"
 rsource "display/Kconfig"
+rsource "input/Kconfig"
 endmenu

@@ -1,0 +1,9 @@
+menuconfig INPUT_EXTERNAL
+	bool "Input drivers (external)"
+	default y if INPUT
+
+if INPUT_EXTERNAL
+
+rsource "Kconfig.lsm6dso_tap"
+
+endif # INPUT_EXTERNAL
