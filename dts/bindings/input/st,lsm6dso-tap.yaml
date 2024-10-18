@@ -1,0 +1,11 @@
+description: LSM6DSO 6-axis IMU sensor (TAP detection)
+
+compatible: "st,lsm6dso-tap"
+
+include: ["spi-device.yaml", "sensor-device.yaml"]
+
+properties:
+  int1-gpios:
+    type: phandle-array
+    required: true
+    description: INT1 GPIO
