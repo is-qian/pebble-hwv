@@ -25,6 +25,7 @@ static const struct bt_data sd[] = {
 };
 
 static const struct device *const disp = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+static const struct device *const buttons = DEVICE_DT_GET(DT_NODELABEL(buttons));
 static const struct device *const led = DEVICE_DT_GET(DT_ALIAS(led0));
 
 static bool button_state;
@@ -75,7 +76,7 @@ static void input_cb(struct input_event *evt, void *user_data)
 	(void)bt_lbs_send_button_state(button_state);
 }
 
-INPUT_CALLBACK_DEFINE(NULL, input_cb, NULL);
+INPUT_CALLBACK_DEFINE(buttons, input_cb, NULL);
 
 static void led_cb(bool led_state)
 {
