@@ -24,6 +24,7 @@
 		light1 = &als_pt19;
 		mag0 = &bmm350;
 		press0 = &bmp390;
+		tap0 = &lsm6dso;
 	};
 
 	buttons {
