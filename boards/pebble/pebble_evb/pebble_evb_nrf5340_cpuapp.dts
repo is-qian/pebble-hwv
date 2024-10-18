@@ -18,9 +18,7 @@
 	};
 
 	aliases {
-		accel0 = &lsm6dso;
 		button0 = &button1;
-		gyro0 = &lsm6dso;
 		led0 = &npm1300_led;
 		light0 = &opt3001;
 		light1 = &als_pt19;
@@ -240,9 +238,9 @@
 	};
 
 	lsm6dso: imu-sensor@1 {
-		compatible = "st,lsm6dso";
+		compatible = "st,lsm6dso-tap";
 		reg = <0x1>;
-		irq-gpios = <&gpio0 23 GPIO_ACTIVE_HIGH>;
+		int1-gpios = <&gpio0 23 GPIO_ACTIVE_HIGH>;
 		spi-max-frequency = <DT_FREQ_M(10)>;
 	};
 };
