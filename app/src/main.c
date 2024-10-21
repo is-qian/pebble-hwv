@@ -11,6 +11,7 @@
 
 #include <bluetooth/services/lbs.h>
 
+#include <arm_math.h>
 #include <app_version.h>
 
 LOG_MODULE_REGISTER(app, CONFIG_APP_LOG_LEVEL);
@@ -36,11 +37,32 @@ static bool tap_led_state;
 #define DISP_HEIGHT DT_PROP(DT_CHOSEN(zephyr_display), height)
 static uint8_t disp_buf[DISP_WIDTH * DISP_HEIGHT / 8];
 
-static void draw_filled_rect(uint8_t *buf, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
+static void draw_filled_rect(const struct display_buffer_descriptor *desc, uint8_t *buf, uint8_t x0,
+			     uint8_t y0, uint8_t x1, uint8_t y1, uint16_t angle)
 {
-	for (size_t row = y0; row <= y1; row++) {
-		for (size_t col = x0; col <= x1; col++) {
-			buf[row * DISP_WIDTH / 8 + col / 8] |= 1 << (col % 8);
+	float sin_angle, cos_angle;
+
+	memset(buf, 0xff, desc->buf_size);
+
+	uint8_t center_x = x0 + (x1 - x0) / 2;
+	uint8_t center_y = y0 + (y1 - y0) / 2;
+
+	arm_sin_cos_f32((float)angle, &sin_angle, &cos_angle);
+
+	for (uint16_t y = y0; y <= y1; y++) {
+		int16_t t_y = y - center_y;
+		for (uint16_t x = x0; x <= x1; x++) {
+			int16_t t_x = x - center_x;
+			int16_t new_x = (int16_t)(t_x * cos_angle - t_y * sin_angle);
+			int16_t new_y = (int16_t)(t_x * sin_angle + t_y * cos_angle);
+			new_x += center_x;
+			new_y += center_y;
+
+			if (new_x > desc->width || new_y > desc->height) {
+				continue;
+			}
+
+			buf[new_y * desc->width / 8 + new_x / 8] &= ~(1 << (new_x % 8));
 		}
 	}
 }
@@ -137,13 +159,6 @@ int main(void)
 		return 0;
 	}
 
-	draw_filled_rect(disp_buf, 16, 16, DISP_WIDTH - 16, DISP_HEIGHT - 16);
-	err = display_write(disp, 0, 0, &desc, disp_buf);
-	if (err < 0) {
-		LOG_ERR("Failed to write to display (%d)", err);
-		return 0;
-	}
-
 	for (int8_t i = 100; i >= 0; i -= 10) {
 		err = display_set_brightness(disp, (uint8_t)i);
 		if (err < 0) {
@@ -152,6 +167,15 @@ int main(void)
 		}
 
 		k_msleep(100);
+	}
+
+	for (uint16_t i = 0; i <= 90; i++) {
+		draw_filled_rect(&desc, disp_buf, 32, 44, DISP_WIDTH - 32, DISP_HEIGHT - 44, i);
+		err = display_write(disp, 0, 0, &desc, disp_buf);
+		if (err < 0) {
+			LOG_ERR("Failed to write to display (%d)", err);
+			return 0;
+		}
 	}
 
 	if (!device_is_ready(led)) {
