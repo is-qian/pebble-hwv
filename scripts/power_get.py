@@ -7,24 +7,24 @@ from pyftdi.i2c import I2cController
 # Shunt resistor value, ohms
 R_SHUNT = 0.5
 
-# Power bus config: name <-> (addr, current_lsb (A))
+# Power bus config: name <-> (addr, max current (A))
 BUS_CONFIG = {
-    "VUSB": (0x40, 1 / 1e4),
-    "VBAT": (0x41, 1 / 1e4),
-    "VSYS": (0x42, 1 / 1e4),
-    "LIGHT": (0x43, 1 / 1e6),
-    "nPM_1.8V": (0x44, 1 / 1e6),
-    "nPM_3.0V": (0x45, 1 / 1e6),
-    "VDDIO": (0x46, 1 / 1e6),
-    "FLASH": (0x47, 1 / 1e6),
-    "VBUS_O": (0x48, 1 / 1e4),
-    "VDD_nRF": (0x49, 1 / 1e6),
-    "LCD": (0x4A, 1 / 1e6),
-    "LED": (0x4B, 1 / 1e6),
-    "SENSOR_1.8V": (0x4C, 1 / 1e6),
-    "SPK": (0x4D, 1 / 1e6),
-    "MIC": (0x4E, 1 / 1e6),
-    "LRA": (0x4F, 1 / 1e6),
+    "VUSB": (0x40, 1.5),
+    "VBAT": (0x41, 0.8),
+    "VSYS": (0x42, 0.5),
+    "LIGHT": (0x43, 0.05),
+    "nPM_1.8V": (0x44, 0.2),
+    "nPM_3.0V": (0x45, 0.2),
+    "VDDIO": (0x46, 0.05),
+    "FLASH": (0x47, 0.01),
+    "VBUS_O": (0x48, 1.5),
+    "VDD_nRF": (0x49, 0.001),
+    "LCD": (0x4A, 0.001),
+    "LED": (0x4B, 0.05),
+    "SENSOR_1.8V": (0x4C, 0.001),
+    "SPK": (0x4D, 0.05),
+    "MIC": (0x4E, 0.05),
+    "LRA": (0x4F, 0.05),
 }
 
 
@@ -78,7 +78,7 @@ class INA226(object):
     _MF_ID = 0x5449
     _DIE_ID = 0x2260
 
-    def __init__(self, i2c, addr, current_lsb):
+    def __init__(self, i2c, addr, i_max):
         self._slave = i2c.get_port(addr)
 
         # verify it's an INA226
@@ -95,10 +95,12 @@ class INA226(object):
             raise ValueError(f"Unexpected die ID: 0x{die_id:04x}")
 
         # configure calibration, ref 6.5
-        self._current_lsb = current_lsb
-        cal = int(0.00512 / (self._current_lsb * R_SHUNT))
+        self._current_lsb = i_max / 2**15
+        cal = int(0.00512 / ((i_max / 2**15) * R_SHUNT))
         if cal > 0xFFFF:
-            raise ValueError("Unsupported calibration value, adjust current LSB")
+            cal = 0xFFFF
+            self._current_lsb = 0.00512 / (cal * R_SHUNT)
+            print(f"Adjusted resolution to {self._current_lsb / 1e-6:.3f} uA/LSB")
 
         self._slave.write_to(INA226._REG_CALIB, struct.pack(">H", cal))
 
@@ -106,13 +108,13 @@ class INA226(object):
         #  - Vshunt and Vbus, continuous mode
         #  - Vshunt conversion time: 1.1ms
         #  - Vbus conversion time: 1.1ms
-        #  - # averages: 256
-        # expected conversion time: = 281.6ms
+        #  - # averages: 512
+        # expected conversion time: = 563.2ms~
         config = (
             INA226._MODE_CONT_ALL
             | INA226._VSHUNT_CT_1100US
             | INA226._VBUS_CT_1100US
-            | INA226._AVG_256
+            | INA226._AVG_512
         )
         self._slave.write_to(INA226._REG_CONFIG, struct.pack(">H", config))
 
