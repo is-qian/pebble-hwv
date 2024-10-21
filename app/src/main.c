@@ -170,12 +170,18 @@ int main(void)
 	}
 
 	for (uint16_t i = 0; i <= 90; i++) {
-		draw_filled_rect(&desc, disp_buf, 32, 44, DISP_WIDTH - 32, DISP_HEIGHT - 44, i);
+		draw_filled_rect(&desc, disp_buf, 60, 70, DISP_WIDTH - 60, DISP_HEIGHT - 70, i);
 		err = display_write(disp, 0, 0, &desc, disp_buf);
 		if (err < 0) {
 			LOG_ERR("Failed to write to display (%d)", err);
 			return 0;
 		}
+	}
+
+	err = display_set_brightness(disp, 10);
+	if (err < 0) {
+		LOG_ERR("Failed to set brightness (%d)", err);
+		return 0;
 	}
 
 	if (!device_is_ready(led)) {
