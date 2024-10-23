@@ -71,7 +71,7 @@ static int ls013b7dh05_blanking_off(const struct device *dev)
 		return ret;
 	}
 
-	ret = pwm_set_pulse_dt(&config->extcomin, PWM_USEC(10));
+	ret = pwm_set_pulse_dt(&config->extcomin, PWM_USEC(100));
 	if (ret < 0) {
 		return ret;
 	}
