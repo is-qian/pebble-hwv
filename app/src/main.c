@@ -178,12 +178,6 @@ int main(void)
 		}
 	}
 
-	err = display_set_brightness(disp, 10);
-	if (err < 0) {
-		LOG_ERR("Failed to set brightness (%d)", err);
-		return 0;
-	}
-
 	if (!device_is_ready(led)) {
 		LOG_ERR("LED device not ready");
 		return 0;
