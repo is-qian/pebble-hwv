@@ -20,7 +20,8 @@ struct ls013b7dh05_config {
 	uint8_t width;
 	uint8_t height;
 	uint8_t line_width;
-	uint8_t *tx_buf;
+	uint8_t *fb;
+	uint32_t fb_size;
 };
 
 static int ls013b7dh05_clear(const struct device *dev)
@@ -84,20 +85,23 @@ static int ls013b7dh05_blanking_off(const struct device *dev)
 	return 0;
 }
 
+static void *ls013b7dh05_get_framebuffer(const struct device *dev)
+{
+	const struct ls013b7dh05_config *config = dev->config;
+
+	return config->fb;
+}
+
 static int ls013b7dh05_write(const struct device *dev, uint16_t x, uint16_t y,
 			     const struct display_buffer_descriptor *desc, const void *buf)
 {
 	const struct ls013b7dh05_config *config = dev->config;
-	struct spi_buf sbuf = {.buf = config->tx_buf};
+	struct spi_buf sbuf;
 	struct spi_buf_set sbufs = {.buffers = &sbuf, .count = 1U};
-	uint8_t *tx_buf = config->tx_buf;
-	uint8_t *d_buf = (uint8_t *)buf;
-	uint8_t current_y = y + 1;
-	uint8_t lines_pending = desc->height;
 	int ret;
 
-	if (desc->pitch != config->width || desc->height > config->height || desc->height == 0U) {
-		LOG_ERR("Unsupported buffer descriptor");
+	if (buf != config->fb || desc->height > config->height || desc->height == 0U) {
+		LOG_ERR("Unsupported buffer");
 		return -EINVAL;
 	}
 
@@ -106,37 +110,33 @@ static int ls013b7dh05_write(const struct device *dev, uint16_t x, uint16_t y,
 		return -EINVAL;
 	}
 
-	while (lines_pending > 0) {
-		uint16_t cnt = 0;
-		uint8_t n_lines = MIN(CONFIG_DISPLAY_LS013B7DH05_TXBUF_LINES, lines_pending);
-
-		/* WRITE */
-		tx_buf[cnt++] = LS013B7DH05_WRITE;
-
-		while (n_lines-- > 0) {
-			/* ADDR */
-			tx_buf[cnt++] = current_y++;
-			/* DATA */
-			memcpy(&tx_buf[cnt], d_buf, config->line_width);
-			cnt += config->line_width;
-			d_buf += config->line_width;
-			/* DUMMY */
-			tx_buf[cnt++] = 0U;
-
-			lines_pending--;
-		}
-
-		/* LAST DUMMY */
-		tx_buf[cnt++] = 0U;
-
-		sbuf.len = cnt;
-		ret = spi_write_dt(&config->spi, &sbufs);
-		if (ret < 0) {
-			return ret;
-		}
+	uint8_t init[2] = { LS013B7DH05_WRITE, 1U };
+	sbuf.buf = init;
+	sbuf.len = 2U;
+	ret = spi_write_dt(&config->spi, &sbufs);
+	if (ret < 0) {
+		goto release;
 	}
 
-	return 0;
+	sbuf.buf = (void *)buf;
+	sbuf.len = config->fb_size;
+	ret = spi_write_dt(&config->spi, &sbufs);
+	if (ret < 0) {
+		goto release;
+	}
+
+	uint8_t end = 0U;
+	sbuf.buf = &end;
+	sbuf.len = 1U;
+	ret = spi_write_dt(&config->spi, &sbufs);
+	if (ret < 0) {
+		goto release;
+	}
+
+release:
+	(void)spi_release_dt(&config->spi);
+
+	return ret;
 }
 
 static int ls013b7dh05_set_brightness(const struct device *dev, uint8_t brightness)
@@ -208,26 +208,30 @@ static int ls013b7dh05_init(const struct device *dev)
 		return ret;
 	}
 
+	for (uint8_t line = 0U; line < (config->height - 1U); line++) {
+		config->fb[line * (config->width / 8U + 2) + config->width / 8 + 1U] = line + 2U;
+	}
+
 	return 0;
 }
 
 static const struct display_driver_api ls013b7dh05_api = {
 	.blanking_on = ls013b7dh05_blanking_on,
 	.blanking_off = ls013b7dh05_blanking_off,
+	.get_framebuffer = ls013b7dh05_get_framebuffer,
 	.write = ls013b7dh05_write,
 	.set_brightness = ls013b7dh05_set_brightness,
 	.get_capabilities = ls013b7dh05_get_capabilities,
 };
 
 #define LS013B7DH05_DEFINE(n)                                                                      \
-	static uint8_t tx_buf##n[CONFIG_DISPLAY_LS013B7DH05_TXBUF_LINES *                          \
-					 (DIV_ROUND_UP(DT_INST_PROP(n, width), 8U) + 2U) +         \
-				 2U];                                                              \
+	static uint8_t fb##n[(DT_INST_PROP(n, width) * DT_INST_PROP(n, height)) / 8U +             \
+			     DT_INST_PROP(n, width) * 2U];                                         \
                                                                                                    \
 	static const struct ls013b7dh05_config ls013b7dh05_config_##n = {                          \
 		.spi = SPI_DT_SPEC_INST_GET(n,                                                     \
 					    SPI_OP_MODE_MASTER | SPI_WORD_SET(8U) |                \
-						    SPI_TRANSFER_LSB | SPI_CS_ACTIVE_HIGH,         \
+						    SPI_TRANSFER_LSB | SPI_CS_ACTIVE_HIGH | SPI_HOLD_ON_CS | SPI_LOCK_ON,         \
 					    0U),                                                   \
 		.disp = GPIO_DT_SPEC_INST_GET(n, disp_gpios),                                      \
 		.extcomin = PWM_DT_SPEC_INST_GET(n),                                               \
@@ -235,7 +239,8 @@ static const struct display_driver_api ls013b7dh05_api = {
 		.width = DT_INST_PROP(n, width),                                                   \
 		.height = DT_INST_PROP(n, height),                                                 \
 		.line_width = DIV_ROUND_UP(DT_INST_PROP(n, width), 8U),                            \
-		.tx_buf = tx_buf##n,                                                               \
+		.fb = fb##n,                                                               \
+		.fb_size = ARRAY_SIZE(fb##n), \
 	};                                                                                         \
                                                                                                    \
 	DEVICE_DT_INST_DEFINE(n, &ls013b7dh05_init, NULL, NULL, &ls013b7dh05_config_##n,           \

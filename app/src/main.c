@@ -35,14 +35,15 @@ static bool tap_led_state;
 
 #define DISP_WIDTH  DT_PROP(DT_CHOSEN(zephyr_display), width)
 #define DISP_HEIGHT DT_PROP(DT_CHOSEN(zephyr_display), height)
-static uint8_t disp_buf[DISP_WIDTH * DISP_HEIGHT / 8];
 
 static void draw_filled_rect(const struct display_buffer_descriptor *desc, uint8_t *buf, uint8_t x0,
 			     uint8_t y0, uint8_t x1, uint8_t y1, uint16_t angle)
 {
 	float sin_angle, cos_angle;
 
-	memset(buf, 0xff, desc->buf_size);
+	for (uint16_t i = 0; i < desc->height; i++) {
+		memset(&buf[i * desc->pitch / 8], 0xff, desc->width / 8);
+	}
 
 	uint8_t center_x = x0 + (x1 - x0) / 2;
 	uint8_t center_y = y0 + (y1 - y0) / 2;
@@ -62,7 +63,7 @@ static void draw_filled_rect(const struct display_buffer_descriptor *desc, uint8
 				continue;
 			}
 
-			buf[new_y * desc->width / 8 + new_x / 8] &= ~(1 << (new_x % 8));
+			buf[new_y * desc->pitch / 8 + new_x / 8] &= ~(1 << (new_x % 8));
 		}
 	}
 }
@@ -140,10 +141,9 @@ int main(void)
 {
 	int err;
 	struct display_buffer_descriptor desc = {
-		.buf_size = sizeof(disp_buf),
 		.width = DISP_WIDTH,
 		.height = DISP_HEIGHT,
-		.pitch = DISP_WIDTH,
+		.pitch = DISP_WIDTH + 2 * 8,
 	};
 
 	LOG_INF("Pebble Application %s", APP_VERSION_STRING);
@@ -169,9 +169,11 @@ int main(void)
 		k_msleep(100);
 	}
 
+	uint8_t *buf = display_get_framebuffer(disp);
+
 	for (uint16_t i = 0; i <= 90; i++) {
-		draw_filled_rect(&desc, disp_buf, 60, 70, DISP_WIDTH - 60, DISP_HEIGHT - 70, i);
-		err = display_write(disp, 0, 0, &desc, disp_buf);
+		draw_filled_rect(&desc, buf, 60, 70, DISP_WIDTH - 60, DISP_HEIGHT - 70, i);
+		err = display_write(disp, 0, 0, &desc, buf);
 		if (err < 0) {
 			LOG_ERR("Failed to write to display (%d)", err);
 			return 0;

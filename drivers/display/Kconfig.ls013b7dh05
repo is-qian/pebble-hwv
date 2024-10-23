@@ -8,11 +8,3 @@ config DISPLAY_LS013B7DH05
 	default y
 	help
 	  Driver for the Sharp LS013B7DH05 display
-
-config DISPLAY_LS013B7DH05_TXBUF_LINES
-	int "Number of lines in the display transmit buffer"
-	default 20
-	range 1 168
-	depends on DISPLAY_LS013B7DH05
-	help
-	  Number of lines in the display transmit buffer
