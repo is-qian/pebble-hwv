@@ -38,6 +38,7 @@ static int lsm6dso_tap_init(const struct device *dev)
 	stmdev_ctx_t *ctx = (stmdev_ctx_t *)&config->ctx;
 	int ret;
 	uint8_t chip_id;
+	uint8_t rst = 0;
 
 	if (!spi_is_ready_dt(&config->spi)) {
 		LOG_ERR("SPI not ready");
@@ -65,6 +66,11 @@ static int lsm6dso_tap_init(const struct device *dev)
 	 * ref. 5.5.4 Single-tap example, AN5192
 	 */
 
+	lsm6dso_reset_set(ctx, PROPERTY_ENABLE);
+	do {
+		lsm6dso_reset_get(ctx, &rst);
+	} while (rst);
+
 	/* full scale: +/- 2g */
 	ret = lsm6dso_xl_full_scale_set(ctx, LSM6DSO_2g);
 	if (ret < 0) {
@@ -72,10 +78,23 @@ static int lsm6dso_tap_init(const struct device *dev)
 		return ret;
 	}
 
-	/* data rate: 417 Hz */
-	ret = lsm6dso_xl_data_rate_set(ctx, LSM6DSO_XL_ODR_417Hz);
+	/* data rate: 26 Hz */
+	ret = lsm6dso_xl_data_rate_set(ctx, LSM6DSO_XL_ODR_26Hz);
 	if (ret < 0) {
 		LOG_ERR("Failed to set accelerometer data rate");
+		return ret;
+	}
+
+	ret = lsm6dso_fsm_data_rate_set(ctx, LSM6DSO_ODR_FSM_26Hz);
+	if (ret < 0) {
+		LOG_ERR("Failed to set FSM data rate");
+		return ret;
+	}
+
+	/* low power normal mode (no HP) */
+	ret = lsm6dso_xl_power_mode_set(ctx, LSM6DSO_LOW_NORMAL_POWER_MD);
+	if (ret < 0) {
+		LOG_ERR("Failed to set power mode");
 		return ret;
 	}
 
@@ -98,34 +117,34 @@ static int lsm6dso_tap_init(const struct device *dev)
 		return ret;
 	}
 
-	/* X,Y,Z threshold: 9 * FS_XL / 2^5 = 9 * 2 / 32 = 562.5 mg */
-	ret = lsm6dso_tap_threshold_x_set(ctx, 9);
+	/* X,Y,Z threshold: 1 * FS_XL / 2^5 = 1 * 2 / 32 = 62.5 mg */
+	ret = lsm6dso_tap_threshold_x_set(ctx, 1);
 	if (ret < 0) {
 		LOG_ERR("Failed to set tap threshold on X axis");
 		return ret;
 	}
 
-	ret = lsm6dso_tap_threshold_y_set(ctx, 9);
+	ret = lsm6dso_tap_threshold_y_set(ctx, 1);
 	if (ret < 0) {
 		LOG_ERR("Failed to set tap threshold on Y axis");
 		return ret;
 	}
 
-	ret = lsm6dso_tap_threshold_z_set(ctx, 9);
+	ret = lsm6dso_tap_threshold_z_set(ctx, 1);
 	if (ret < 0) {
 		LOG_ERR("Failed to set tap threshold on Z axis");
 		return ret;
 	}
 
-	/* shock time: 2 * 8 / ODR_XL = 2 * 8 / 417 ~= 38.3 ms */
-	ret = lsm6dso_tap_shock_set(ctx, 2);
+	/* shock time: 2 / ODR_XL = 2 / 26 ~= 77 ms */
+	ret = lsm6dso_tap_shock_set(ctx, 0);
 	if (ret < 0) {
 		LOG_ERR("Failed to set tap shock duration");
 		return ret;
 	}
 
-	/* quiet time: 1 * 4 / ODR_XL = 1 * 4 / 417 ~= 9.6 ms */
-	ret = lsm6dso_tap_quiet_set(ctx, 1);
+	/* quiet time: 2 / ODR_XL = 2 / 26 ~= 77 ms */
+	ret = lsm6dso_tap_quiet_set(ctx, 0);
 	if (ret < 0) {
 		LOG_ERR("Failed to set tap quiet duration");
 		return ret;
