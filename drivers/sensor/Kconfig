@@ -1,0 +1,9 @@
+menuconfig SENSOR_EXTERNAL
+	bool "Sensor drivers (external)"
+	default y if SENSOR
+
+if SENSOR_EXTERNAL
+
+rsource "bosch/Kconfig"
+
+endif # SENSOR_EXTERNAL

@@ -134,7 +134,7 @@
 	bmm350: magnetic-sensor@14 {
 		compatible = "bosch,bmm350";
 		reg = <0x14>;
-		int-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+		drdy-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
 	};
 
 	da7212: audio-codec@1a {

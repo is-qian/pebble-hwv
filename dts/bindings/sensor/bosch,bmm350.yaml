@@ -1,11 +1,12 @@
-description: Bosch BMM350 Geomagnetic sensor
+# Copyright (c) 2024, Bosch Sensortec GmbH
 
-compatible: "bosch,bmm350"
+# SPDX-License-Identifier: Apache-2.0
 
-include: ["sensor-device.yaml", "i2c-device.yaml"]
+include: sensor-device.yaml
 
 properties:
-  int-gpios:
+  drdy-gpios:
     type: phandle-array
     description: |
-      Interrupt output pin
+      This property specifies the connection for data ready pin.
+      The polarity default is active high when sensor data is ready.

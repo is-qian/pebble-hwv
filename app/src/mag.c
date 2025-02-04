@@ -41,7 +41,8 @@ static int cmd_mag_get(const struct shell *sh, size_t argc, char **argv)
 		return 0;
 	}
 
-	shell_print(sh, "Magnetic field (raw): %d, %d, %d", val_x.val1, val_y.val1, val_z.val1);
+	shell_print(sh, "Magnetic field (gauss): %.6f, %.6f, %.6f", val_x.val1 + val_x.val2 / 100.0,
+		    val_y.val1 + val_y.val2 / 100.0, val_z.val1 + val_z.val2 / 100.0);
 
 	return 0;
 }
@@ -53,8 +54,26 @@ SHELL_SUBCMD_ADD((hwv), mag, &sub_mag_cmds, "Magnetic sensor", NULL, 0, 0);
 
 int mag_init(void)
 {
+	int ret;
+	struct sensor_value val;
+
 	if (!device_is_ready(mag)) {
 		return -ENODEV;
+	}
+
+	val.val1 = 25;
+	val.val2 = 0;
+	ret = sensor_attr_set(mag, SENSOR_CHAN_MAGN_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &val);
+	if (ret < 0) {
+		return ret;
+	}
+
+	/* "Normal" mode */
+	val.val1 = 1;
+	val.val2 = 0;
+	ret = sensor_attr_set(mag, SENSOR_CHAN_MAGN_XYZ, SENSOR_ATTR_OVERSAMPLING, &val);
+	if (ret < 0) {
+		return ret;
 	}
 
 	initialized = true;
