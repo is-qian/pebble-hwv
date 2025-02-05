@@ -1,24 +1,22 @@
-# Pebble Nordic
+# CoreDevices Hardware Verification Firmware (HWV)
 
-This repository contains a basic application to test Pebble development boards
-base on Nordic nRF SoCs.
+This repository contains a basic application to verify CoreDevices hardware.
 
 ## Getting started
 
-Before getting started, make sure you have a proper nRF Connect SDK development
+Before getting started, make sure you have a proper Zephyr development
 environment. Follow the official
-[Installation guide](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/installation/install_ncs.html).
+[Zephyr Getting Started Guide](https://docs.zephyrproject.org/latest/getting_started/index.html).
 
 ### Initialization
 
 The first step is to initialize the workspace folder (`my-workspace`) where the
-`pebble-nordic` and all nRF Connect SDK modules will be cloned. Run the
-following command:
+`pebble-hwv` and all Zephyr modules will be cloned. Run the following command:
 
 ```shell
-# initialize my-workspace for the pebble-nordic (main branch)
-west init -m https://github.com/teslabs/pebble-nordic --mr main my-workspace
-# update nRF Connect SDK modules
+# initialize my-workspace for the pebble-hwv (main branch)
+west init -m https://github.com/coredevices/pebble-hwv --mr main my-workspace
+# update Zephyr modules
 cd my-workspace
 west update
 ```
@@ -28,11 +26,11 @@ west update
 To build the application, run the following command:
 
 ```shell
-cd pebble-nordic
+cd pebble-hwv
 west build -b $BOARD_TARGET app
 ```
 
-where `$BOARD_TARGET` is the board target.
+where `$BOARD_TARGET` is the board target, e.g. `asterix_evt1`.
 
 A sample debug configuration is also provided. To apply it, run the following
 command:
@@ -53,17 +51,11 @@ Alternative runners can be used with `west flash --runner $RUNNER_NAME`.
 Supported alternative runners are `nrfjprog` (JLink-based), or, if using FTDI,
 `openocd` (make sure to build a recent version).
 
-You may also flash a single domain if not changing remote images, e.g.
-
-```shell
-west flash --domain app
-```
-
 ### Boards
 
-Supported boards and associated targets:
+Supported boards:
 
-- `pebble_evb`: `pebble_evb/nrf5340/cpuapp`, `pebble_evb/nrf5340/cpunet`
+- `asterix_evt1`
 
 ### Snippets
 
