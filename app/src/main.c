@@ -198,7 +198,7 @@ int main(void)
 
 	(void)bt_lbs_init(&lbs_callbacks);
 
-	err = bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
+	err = bt_le_adv_start(BT_LE_ADV_CONN_FAST_1, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
 	if (err < 0) {
 		LOG_ERR("Advertising failed to start (err %d)", err);
 		return 0;

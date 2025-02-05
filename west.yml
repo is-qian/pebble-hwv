@@ -1,12 +1,11 @@
 manifest:
   remotes:
-    - name: ncs
-      url-base: https://github.com/nrfconnect
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
 
   projects:
-    - name: nrf
-      remote: ncs
-      repo-path: sdk-nrf
+    - name: zephyr
+      remote: zephyrproject-rtos
       revision: main
       import:
         name-allowlist:
@@ -14,9 +13,6 @@ manifest:
           - cmsis-dsp
           - hal_nordic
           - hal_st
-          - libmetal
-          - nrfxlib
-          - open-amp
           - segger
-          - tinycrypt
+          - mbedtls
           - zephyr

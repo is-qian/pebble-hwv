@@ -9,3 +9,8 @@ config INPUT_LSM6DSO_TAP
 	select USE_STDC_LSM6DSO
 	help
 	  Enable driver for LSM6DSO (tap detection driver)
+
+if INPUT_LSM6DSO_TAP
+# TODO: fix hal_st glue code location upstream
+source "drivers/sensor/st/stmemsc/Kconfig"
+endif
