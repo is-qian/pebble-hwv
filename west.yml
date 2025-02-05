@@ -10,7 +10,6 @@ manifest:
       import:
         name-allowlist:
           - cmsis
-          - cmsis-dsp
           - hal_nordic
           - hal_st
           - segger

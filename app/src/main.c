@@ -8,10 +8,10 @@
 #include <zephyr/kernel.h>
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/atomic.h>
 
 #include <bluetooth/services/lbs.h>
 
-#include <arm_math.h>
 #include <app_version.h>
 
 LOG_MODULE_REGISTER(app, CONFIG_APP_LOG_LEVEL);
@@ -33,37 +33,24 @@ static const struct device *const tap = DEVICE_DT_GET(DT_ALIAS(tap0));
 static bool button_state;
 static bool tap_led_state;
 
+static ATOMIC_DEFINE(state, 2U);
+
+#define STATE_CONNECTED    1U
+#define STATE_DISCONNECTED 2U
+
 #define DISP_WIDTH  DT_PROP(DT_CHOSEN(zephyr_display), width)
 #define DISP_HEIGHT DT_PROP(DT_CHOSEN(zephyr_display), height)
 
 static void draw_filled_rect(const struct display_buffer_descriptor *desc, uint8_t *buf, uint8_t x0,
-			     uint8_t y0, uint8_t x1, uint8_t y1, uint16_t angle)
+			     uint8_t y0, uint8_t x1, uint8_t y1)
 {
-	float sin_angle, cos_angle;
-
 	for (uint16_t i = 0; i < desc->height; i++) {
 		memset(&buf[i * desc->pitch / 8], 0xff, desc->width / 8);
 	}
 
-	uint8_t center_x = x0 + (x1 - x0) / 2;
-	uint8_t center_y = y0 + (y1 - y0) / 2;
-
-	arm_sin_cos_f32((float)angle, &sin_angle, &cos_angle);
-
 	for (uint16_t y = y0; y <= y1; y++) {
-		int16_t t_y = y - center_y;
 		for (uint16_t x = x0; x <= x1; x++) {
-			int16_t t_x = x - center_x;
-			int16_t new_x = (int16_t)(t_x * cos_angle - t_y * sin_angle);
-			int16_t new_y = (int16_t)(t_x * sin_angle + t_y * cos_angle);
-			new_x += center_x;
-			new_y += center_y;
-
-			if (new_x > desc->width || new_y > desc->height) {
-				continue;
-			}
-
-			buf[new_y * desc->pitch / 8 + new_x / 8] &= ~(1 << (new_x % 8));
+			buf[y * desc->pitch / 8 + x / 8] &= ~(1 << (x % 8));
 		}
 	}
 }
@@ -77,14 +64,14 @@ static void connected(struct bt_conn *conn, uint8_t err)
 
 	LOG_INF("Connected");
 
-	(void)led_on(led, 0);
+	(void)atomic_set_bit(state, STATE_CONNECTED);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	LOG_INF("Disconnected, reason 0x%02x %s", reason, bt_hci_err_to_str(reason));
 
-	(void)led_off(led, 0);
+	(void)atomic_set_bit(state, STATE_DISCONNECTED);
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
@@ -128,11 +115,7 @@ static void tap_input_cb(struct input_event *evt, void *user_data)
 
 	tap_led_state = !tap_led_state;
 
-	if (tap_led_state) {
-		(void)led_on(led, 2);
-	} else {
-		(void)led_off(led, 2);
-	}
+	LOG_INF("TAP detected (%d)", (int)tap_led_state);
 }
 
 INPUT_CALLBACK_DEFINE(tap, tap_input_cb, NULL);
@@ -159,25 +142,21 @@ int main(void)
 		return 0;
 	}
 
-	for (int8_t i = 100; i >= 0; i -= 10) {
-		err = display_set_brightness(disp, (uint8_t)i);
-		if (err < 0) {
-			LOG_ERR("Failed to set brightness (%d)", err);
-			return 0;
-		}
-
-		k_msleep(100);
+	err = display_set_brightness(disp, 100);
+	if (err < 0) {
+		LOG_ERR("Failed to set brightness (%d)", err);
+		return 0;
 	}
 
 	uint8_t *buf = display_get_framebuffer(disp);
 
-	for (uint16_t i = 0; i <= 90; i++) {
-		draw_filled_rect(&desc, buf, 60, 70, DISP_WIDTH - 60, DISP_HEIGHT - 70, i);
-		err = display_write(disp, 0, 0, &desc, buf);
-		if (err < 0) {
-			LOG_ERR("Failed to write to display (%d)", err);
-			return 0;
-		}
+	draw_filled_rect(&desc, buf, 60, 70, DISP_WIDTH - 60, DISP_HEIGHT - 70);
+	err = display_write(disp, 0, 0, &desc, buf);
+	/* FIXME: driver bug! */
+	err = display_write(disp, 0, 0, &desc, buf);
+	if (err < 0) {
+		LOG_ERR("Failed to write to display (%d)", err);
+		return 0;
 	}
 
 	if (!device_is_ready(led)) {
@@ -202,6 +181,19 @@ int main(void)
 	if (err < 0) {
 		LOG_ERR("Advertising failed to start (err %d)", err);
 		return 0;
+	}
+
+	while (1) {
+		if (atomic_test_and_clear_bit(state, STATE_DISCONNECTED)) {
+			err = bt_le_adv_start(BT_LE_ADV_CONN_FAST_1, ad, ARRAY_SIZE(ad), sd,
+					      ARRAY_SIZE(sd));
+			if (err < 0) {
+				LOG_ERR("Advertising failed to start (err %d)", err);
+				return 0;
+			}
+		}
+
+		k_sleep(K_SECONDS(1));
 	}
 
 	return 0;
