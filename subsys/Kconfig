@@ -1,0 +1,3 @@
+menu "Subsystems"
+rsource "bluetooth/Kconfig"
+endmenu
