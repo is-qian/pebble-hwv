@@ -9,7 +9,7 @@
 
 / {
 	model = "Pebble Asterix EVT1";
-	compatible = "pebble,asterix-evt1";
+	compatible = "coredevices,asterix-evt1";
 
 	chosen {
 		zephyr,console = &uart0;
