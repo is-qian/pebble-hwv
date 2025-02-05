@@ -1,0 +1,5 @@
+boards:
+- name: asterix_evt1
+  vendor: pebble
+  socs:
+    - name: nrf52840

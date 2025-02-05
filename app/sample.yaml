@@ -2,10 +2,9 @@ sample:
   description: Pebble Test Application
   name: pebble-test-application
 common:
-  sysbuild: true
   build_only: true
   integration_platforms:
-    - pebble_evb/nrf5340/cpuapp
+    - asterix_evt1
 tests:
   app.default: {}
   app.debug:

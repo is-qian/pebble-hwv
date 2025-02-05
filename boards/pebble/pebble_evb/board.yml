@@ -1,5 +1,0 @@
-boards:
-- name: pebble_evb
-  vendor: pebble
-  socs:
-    - name: nrf5340

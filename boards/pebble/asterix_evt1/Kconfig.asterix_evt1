@@ -1,0 +1,2 @@
+config BOARD_ASTERIX_EVT1
+	select SOC_NRF52840_QIAA

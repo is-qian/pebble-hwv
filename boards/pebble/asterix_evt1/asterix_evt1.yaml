@@ -1,10 +1,10 @@
-identifier: pebble_evb/nrf5340/cpuapp
-name: PEBBLE-EVB-CPUAPP
+identifier: asterix_evt1
+name: PEBBLE-ASTERIX-EVT1
 type: mcu
 arch: arm
 toolchain:
   - zephyr
-ram: 448
+ram: 256
 flash: 1024
 supported: []
 vendor: pebble

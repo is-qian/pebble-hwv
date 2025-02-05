@@ -1,0 +1,243 @@
+/dts-v1/;
+
+#include <nordic/nrf52840_qiaa.dtsi>
+#include <nordic/nrf52840_partition.dtsi>
+#include "asterix_evt1-pinctrl.dtsi"
+
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/regulator/npm1300.h>
+
+/ {
+	model = "Pebble Asterix EVT1";
+	compatible = "pebble,asterix-evt1";
+
+	chosen {
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,display = &ls013b7dh05;
+	};
+
+	aliases {
+		button0 = &btn_center;
+		led0 = &lm3508;
+		light0 = &opt3001;
+		mag0 = &bmm350;
+		press0 = &bmp390;
+		tap0 = &lsm6dso;
+	};
+
+	buttons: buttons {
+		compatible = "gpio-keys";
+
+		btn_back: button-back {
+			gpios = <&gpio0 28 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "BACK";
+			zephyr,code = <INPUT_KEY_BACK>;
+		};
+
+		btn_up: button-up {
+			gpios = <&gpio0 29 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "UP";
+			zephyr,code = <INPUT_KEY_UP>;
+		};
+
+		btn_center: button-center {
+			gpios = <&gpio0 30 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "CENTER";
+			zephyr,code = <INPUT_KEY_ENTER>;
+		};
+
+		btn_down: button-down {
+			gpios = <&gpio0 31 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "DOWN";
+			zephyr,code = <INPUT_KEY_DOWN>;
+		};
+	};
+
+	lm3508: backlight {
+		compatible = "ti,lm3508";
+		en-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+		pwms = <&pwm0 0 PWM_HZ(256) PWM_POLARITY_NORMAL>;
+	};
+};
+
+&gpiote {
+	status = "okay";
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&pwm0 {
+	status = "okay";
+	pinctrl-0 = <&pwm0_default>;
+	pinctrl-1 = <&pwm0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&pwm1 {
+	status = "okay";
+	pinctrl-0 = <&pwm1_default>;
+	pinctrl-1 = <&pwm1_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&i2c0 {
+	compatible = "nordic,nrf-twim";
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-1 = <&i2c0_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	npm1300: pmic@6b {
+		compatible = "nordic,npm1300";
+		reg = <0x6b>;
+		pmic-int-pin = <1>;
+		host-int-gpios = <&gpio1 12 GPIO_ACTIVE_HIGH>;
+
+		regulators {
+			compatible = "nordic,npm1300-regulator";
+
+			ldo1: LDO1 {
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-allowed-modes = <NPM1300_LDSW_MODE_LDO>;
+				regulator-initial-mode = <NPM1300_LDSW_MODE_LDO>;
+				regulator-init-microvolt = <18000000>;
+			};
+
+			ldo2: LDO2 {
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-allowed-modes = <NPM1300_LDSW_MODE_LDO>;
+				regulator-initial-mode = <NPM1300_LDSW_MODE_LDO>;
+				regulator-init-microvolt = <18000000>;
+				regulator-boot-on;
+			};
+		};
+	};
+};
+
+&i2c1 {
+	compatible = "nordic,nrf-twim";
+	status = "okay";
+	pinctrl-0 = <&i2c1_default>;
+	pinctrl-1 = <&i2c1_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	bmm350: magnetic-sensor@14 {
+		compatible = "bosch,bmm350";
+		reg = <0x14>;
+		int-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+	};
+
+	da7212: audio-codec@1a {
+		compatible = "renesas,da7212";
+		reg = <0x1a>;
+	};
+
+	opt3001: light-sensor@44 {
+		compatible = "ti,opt3001";
+		reg = <0x44>;
+		/* int-gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>; */
+	};
+
+	drv2604: haptic@5a {
+		compatible = "ti,drv2604";
+		reg = <0x5a>;
+		en-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+	};
+
+	lsm6dso: imu-sensor@6a {
+		compatible = "st,lsm6dso-tap";
+		reg = <0x6a>;
+		int1-gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+	};
+
+	bmp390: pressure-sensor@76 {
+		compatible = "bosch,bmp390";
+		reg = <0x76>;
+		int-gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&i2s0 {
+	compatible = "nordic,nrf-i2s";
+	status = "okay";
+	pinctrl-0 = <&i2s0_default>;
+	pinctrl-1 = <&i2s0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&reg1 {
+	regulator-initial-mode = <NRF5X_REG_MODE_LDO>;
+};
+
+&qspi {
+	status = "okay";
+	pinctrl-0 = <&qspi_default>;
+	pinctrl-1 = <&qspi_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	gd25lb255e: memory@0 {
+		compatible = "nordic,qspi-nor";
+		reg = <0>;
+		writeoc = "pp4io";
+		readoc = "read4io";
+		sck-frequency = <8000000>;
+		jedec-id = [c8 60 19];
+		sfdp-bfp = [
+			e5 20 f3 ff  ff ff ff 0f  44 eb 08 6b  08 3b 42 bb
+			fe ff ff ff  ff ff 00 ff  ff ff 42 eb  0c 20 0f 52
+			10 d8 00 ff  d4 31 a5 fe  84 df 14 4f  ec 62 16 33
+			7a 75 7a 75  04 b3 d5 5c  19 06 14 00  08 50 00 01
+		];
+		size = <DT_SIZE_M(32)>;
+		has-dpd;
+		t-enter-dpd = <3000>;
+		t-exit-dpd = <20000>;
+	};
+};
+
+&spi3 {
+	compatible = "nordic,nrf-spim";
+	status = "okay";
+	cs-gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
+	pinctrl-0 = <&spi3_default>;
+	pinctrl-1 = <&spi3_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	ls013b7dh05: display@0 {
+		compatible = "sharp,ls013b7dh05";
+		reg = <0x0>;
+		disp-gpios = <&gpio0 9 GPIO_ACTIVE_HIGH>;
+		pwms = <&pwm1 0 PWM_HZ(60) PWM_POLARITY_NORMAL>;
+		pwm-names = "extcomin";
+		spi-max-frequency = <DT_FREQ_M(1)>;
+		backlight = <&lm3508>;
+		height = <168>;
+		width = <144>;
+	};
+};
+
+&uart0 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart0_default>;
+	pinctrl-1 = <&uart0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&uicr {
+	gpio-as-nreset;
+};
+
+zephyr_udc0: &usbd {
+	compatible = "nordic,nrf-usbd";
+	status = "okay";
+};
