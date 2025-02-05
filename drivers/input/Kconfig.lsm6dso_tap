@@ -3,7 +3,7 @@ config INPUT_LSM6DSO_TAP
 	default y
 	depends on DT_HAS_ST_LSM6DSO_TAP_ENABLED
 	depends on ZEPHYR_HAL_ST_MODULE
-	select SPI
+	select I2C
 	select GPIO
 	select HAS_STMEMSC
 	select USE_STDC_LSM6DSO

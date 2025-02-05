@@ -1,7 +1,7 @@
 #define DT_DRV_COMPAT st_lsm6dso_tap
 
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/spi.h>
+#include <zephyr/drivers/i2c.h>
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
 
@@ -12,7 +12,7 @@ LOG_MODULE_REGISTER(lsm6dso_tap, CONFIG_INPUT_LOG_LEVEL);
 
 struct lsm6dso_tap_config {
 	stmdev_ctx_t ctx;
-	struct spi_dt_spec spi;
+	struct i2c_dt_spec i2c;
 	struct gpio_dt_spec int1;
 };
 
@@ -40,8 +40,8 @@ static int lsm6dso_tap_init(const struct device *dev)
 	uint8_t chip_id;
 	uint8_t rst = 0;
 
-	if (!spi_is_ready_dt(&config->spi)) {
-		LOG_ERR("SPI not ready");
+	if (!i2c_is_ready_dt(&config->i2c)) {
+		LOG_ERR("I2C not ready");
 		return -ENODEV;
 	}
 
@@ -194,10 +194,8 @@ static int lsm6dso_tap_init(const struct device *dev)
 	};                                                                                         \
                                                                                                    \
 	static const struct lsm6dso_tap_config lsm6dso_tap_config_##n = {                          \
-		STMEMSC_CTX_SPI(&lsm6dso_tap_config_##n.spi),                                      \
-		.spi = SPI_DT_SPEC_INST_GET(                                                       \
-			n, SPI_WORD_SET(8) | SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA,   \
-			0U),                                                                       \
+		STMEMSC_CTX_I2C(&lsm6dso_tap_config_##n.i2c),                                      \
+		.i2c = I2C_DT_SPEC_INST_GET(n),                                                    \
 		.int1 = GPIO_DT_SPEC_INST_GET(n, int1_gpios),                                      \
 	};                                                                                         \
                                                                                                    \

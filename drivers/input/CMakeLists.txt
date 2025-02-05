@@ -6,7 +6,7 @@ if(CONFIG_INPUT_LSM6DSO_TAP)
   zephyr_library_include_directories(${ZEPHYR_BASE}/drivers/sensor/st/stmemsc)
   if(NOT CONFIG_SENSOR)
     zephyr_library_sources(
-      ${ZEPHYR_BASE}/drivers/sensor/st/stmemsc/stmemsc_spi.c
+      ${ZEPHYR_BASE}/drivers/sensor/st/stmemsc/stmemsc_i2c.c
       ${ZEPHYR_BASE}/drivers/sensor/st/stmemsc/stmemsc_mdelay.c
     )
   endif()
