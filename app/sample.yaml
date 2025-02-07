@@ -1,12 +1,9 @@
 sample:
-  description: Pebble Test Application
-  name: pebble-test-application
+  description: Pebble HWV
+  name: pebble-hwv
 common:
   build_only: true
   integration_platforms:
     - asterix_evt1
 tests:
   app.default: {}
-  app.debug:
-    extra_overlay_confs:
-      - debug.conf
