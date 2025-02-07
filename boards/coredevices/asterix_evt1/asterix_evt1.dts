@@ -80,11 +80,10 @@
 	pinctrl-names = "default", "sleep";
 };
 
-&pwm1 {
+&sw_pwm {
 	status = "okay";
-	pinctrl-0 = <&pwm1_default>;
-	pinctrl-1 = <&pwm1_sleep>;
-	pinctrl-names = "default", "sleep";
+	generator = <&rtc2>;
+	channel-gpios = <&gpio1 15 GPIO_ACTIVE_HIGH>;
 };
 
 &i2c0 {
@@ -216,7 +215,7 @@
 		compatible = "sharp,ls013b7dh05";
 		reg = <0x0>;
 		disp-gpios = <&gpio0 9 GPIO_ACTIVE_HIGH>;
-		pwms = <&pwm1 0 PWM_HZ(60) PWM_POLARITY_NORMAL>;
+		pwms = <&sw_pwm 0 PWM_HZ(60) PWM_POLARITY_NORMAL>;
 		pwm-names = "extcomin";
 		spi-max-frequency = <DT_FREQ_M(1)>;
 		backlight = <&lm3508>;
