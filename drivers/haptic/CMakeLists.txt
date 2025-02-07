@@ -1,0 +1,2 @@
+zephyr_library()
+zephyr_library_sources_ifdef(CONFIG_HAPTIC_DRV2604 haptic_drv2604.c)

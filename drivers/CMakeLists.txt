@@ -1,3 +1,4 @@
 add_subdirectory_ifdef(CONFIG_DISPLAY display)
 add_subdirectory_ifdef(CONFIG_LED led)
 add_subdirectory_ifdef(CONFIG_INPUT input)
+add_subdirectory_ifdef(CONFIG_HAPTIC haptic)

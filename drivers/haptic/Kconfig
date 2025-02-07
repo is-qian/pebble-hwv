@@ -1,0 +1,18 @@
+menuconfig HAPTIC
+	bool "Haptic drivers"
+
+if HAPTIC
+
+config HAPTIC_INIT_PRIORITY
+	int "Haptic device drivers init priority"
+	default 90
+	help
+	  Haptic device drivers init priority.
+
+module = HAPTIC
+module-str = haptic
+source "subsys/logging/Kconfig.template.log_config"
+
+rsource "Kconfig.drv2604"
+
+endif # HAPTIC
