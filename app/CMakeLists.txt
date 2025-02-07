@@ -10,4 +10,5 @@ target_sources(
     src/ble.c
     src/buttons.c
     src/display.c
+    src/haptic.c
 )
