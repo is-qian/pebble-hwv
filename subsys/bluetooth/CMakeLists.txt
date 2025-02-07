@@ -1,1 +1,0 @@
-add_subdirectory_ifdef(CONFIG_BT_CUSTOM_SERVICES services)

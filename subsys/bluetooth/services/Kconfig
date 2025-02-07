@@ -1,8 +1,0 @@
-menu "Bluetooth Services"
-
-config BT_CUSTOM_SERVICES
-	bool
-
-rsource "Kconfig.lbs"
-
-endmenu

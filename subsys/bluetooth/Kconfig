@@ -1,8 +1,0 @@
-menu "Bluetooth Low Energy"
-
-if BT
-comment "BLE Libraries"
-rsource "services/Kconfig"
-endif # BT
-
-endmenu
