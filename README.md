@@ -32,34 +32,17 @@ west build -b $BOARD_TARGET app
 
 where `$BOARD_TARGET` is the board target, e.g. `asterix_evt1`.
 
-A sample debug configuration is also provided. To apply it, run the following
-command:
-
-```shell
-west build -b $BOARD_TARGET app -- -DOVERLAY_CONFIG=debug.conf
-```
-
 Once you have built the application, run the following command to flash it:
 
 ```shell
 west flash
 ```
 
-By default boards use the `jlink` runner. Some boards may require to disable
-the level shifter between SWD lines/FTDI to use the JTAG header with JLink.
-Alternative runners can be used with `west flash --runner $RUNNER_NAME`.
-Supported alternative runners are `nrfjprog` (JLink-based), or, if using FTDI,
-`openocd` (make sure to build a recent version).
+By default boards use the `jlink` runner. Alternative runners can be used with
+`west flash -r $RUNNER_NAME`.
 
 ### Boards
 
 Supported boards:
 
 - `asterix_evt1`
-
-### Snippets
-
-Supported snippets:
-
-- `uart-logging`: Enables logging and console overt UART
-- `rtt-logging`: Enables logging and console overt RTT
