@@ -11,4 +11,5 @@ target_sources(
     src/buttons.c
     src/display.c
     src/haptic.c
+    src/press.c
 )
