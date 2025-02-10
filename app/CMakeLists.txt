@@ -10,6 +10,7 @@ target_sources(
     src/ble.c
     src/buttons.c
     src/display.c
+    src/flash.c
     src/haptic.c
     src/press.c
 )

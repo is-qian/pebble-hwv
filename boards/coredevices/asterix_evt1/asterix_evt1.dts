@@ -25,6 +25,7 @@
 		press0 = &bmp390;
 		tap0 = &lsm6dso;
 		haptic0 = &drv2604;
+		flash0 = &gd25lb255e;
 	};
 
 	buttons: buttons {

@@ -1,5 +1,6 @@
 #include "buttons.h"
 #include "display.h"
+#include "flash.h"
 #include "haptic.h"
 #include "press.h"
 
@@ -27,6 +28,12 @@ int main(void)
 	ret = display_init();
 	if (ret < 0) {
 		printf("Failed to initialize display module (%d)\n", ret);
+		return 0;
+	}
+
+	ret = flash_init();
+	if (ret < 0) {
+		printf("Failed to initialize flash module (%d)\n", ret);
 		return 0;
 	}
 
