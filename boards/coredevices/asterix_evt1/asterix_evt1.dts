@@ -160,8 +160,9 @@
 	};
 
 	bmp390: pressure-sensor@76 {
-		compatible = "bosch,bmp390-i2c";
+		compatible = "bosch,bmp390";
 		reg = <0x76>;
+		odr = "50";
 		int-gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
 	};
 };
