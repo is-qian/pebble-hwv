@@ -5,7 +5,7 @@
 #include <zephyr/pm/device_runtime.h>
 #include <zephyr/shell/shell.h>
 
-static const struct device *const buttons = DEVICE_DT_GET(DT_NODELABEL(buttons));
+static const struct device *const buttons = DEVICE_DT_GET(DT_ALIAS(buttons));
 K_MSGQ_DEFINE(input_q, sizeof(struct input_event), 10, 1);
 static bool initialized;
 

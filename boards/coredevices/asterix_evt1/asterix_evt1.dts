@@ -18,7 +18,7 @@
 	};
 
 	aliases {
-		button0 = &btn_center;
+		buttons = &buttons;
 		led0 = &lm3508;
 		light0 = &opt3001;
 		mag0 = &bmm350;
