@@ -14,6 +14,7 @@ static const struct display_buffer_descriptor desc = {
 	.height = DISP_HEIGHT,
 	.pitch = DISP_WIDTH + 2 * 8,
 };
+static bool initialized;
 
 static int cmd_display_on(const struct shell *sh, size_t argc, char **argv)
 {
@@ -21,6 +22,11 @@ static int cmd_display_on(const struct shell *sh, size_t argc, char **argv)
 
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
+
+	if (!initialized) {
+		shell_error(sh, "Display module not initialized");
+		return -EPERM;
+	}
 
 	err = display_blanking_off(disp);
 	if (err < 0) {
@@ -40,6 +46,11 @@ static int cmd_display_off(const struct shell *sh, size_t argc, char **argv)
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
+	if (!initialized) {
+		shell_error(sh, "Display module not initialized");
+		return -EPERM;
+	}
+
 	err = display_blanking_on(disp);
 	if (err < 0) {
 		shell_error(sh, "Failed to turn off display (%d)", err);
@@ -58,6 +69,11 @@ static int cmd_display_vpattern(const struct shell *sh, size_t argc, char **argv
 
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
+
+	if (!initialized) {
+		shell_error(sh, "Display module not initialized");
+		return -EPERM;
+	}
 
 	buf = display_get_framebuffer(disp);
 
@@ -92,6 +108,11 @@ static int cmd_display_hpattern(const struct shell *sh, size_t argc, char **argv
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
+	if (!initialized) {
+		shell_error(sh, "Display module not initialized");
+		return -EPERM;
+	}
+
 	buf = display_get_framebuffer(disp);
 
 	for (uint16_t i = 0; i < desc.height; i++) {
@@ -121,6 +142,11 @@ static int cmd_display_brightness(const struct shell *sh, size_t argc, char **ar
 {
 	int err;
 	uint8_t brightness;
+
+	if (!initialized) {
+		shell_error(sh, "Display module not initialized");
+		return -EPERM;
+	}
 
 	if (argc < 2) {
 		shell_error(sh, "Missing brightness value");
@@ -153,3 +179,14 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	SHELL_SUBCMD_SET_END);
 
 SHELL_SUBCMD_ADD((hwv), display, &sub_display_cmds, "Display", NULL, 0, 0);
+
+int display_init(void)
+{
+	if (!device_is_ready(disp)) {
+		return -ENODEV;
+	}
+
+	initialized = true;
+
+	return 0;
+}

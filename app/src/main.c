@@ -1,3 +1,6 @@
+#include "buttons.h"
+#include "display.h"
+#include "haptic.h"
 #include "press.h"
 
 #include <stdio.h>
@@ -14,6 +17,24 @@ int main(void)
 	int ret;
 
 	printf("HWV v%s\n", APP_VERSION_STRING);
+
+	ret = buttons_init();
+	if (ret < 0) {
+		printf("Failed to initialize buttons module (%d)\n", ret);
+		return 0;
+	}
+
+	ret = display_init();
+	if (ret < 0) {
+		printf("Failed to initialize display module (%d)\n", ret);
+		return 0;
+	}
+
+	ret = haptic_init();
+	if (ret < 0) {
+		printf("Failed to initialize haptic module (%d)\n", ret);
+		return 0;
+	}
 
 	ret = press_init();
 	if (ret < 0) {

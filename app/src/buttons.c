@@ -6,6 +6,7 @@
 
 static const struct device *const buttons = DEVICE_DT_GET(DT_NODELABEL(buttons));
 K_MSGQ_DEFINE(input_q, sizeof(struct input_event), 10, 1);
+static bool initialized;
 
 static void buttons_input_cb(struct input_event *evt, void *user_data)
 {
@@ -20,6 +21,11 @@ static int cmd_buttons_check(const struct shell *sh, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
+
+	if (!initialized) {
+		shell_error(sh, "Buttons module not initialized");
+		return -EPERM;
+	}
 
 	k_msgq_purge(&input_q);
 
@@ -73,3 +79,14 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_buttons_cmds,
 			       SHELL_SUBCMD_SET_END);
 
 SHELL_SUBCMD_ADD((hwv), buttons, &sub_buttons_cmds, "Buttons", NULL, 0, 0);
+
+int buttons_init(void)
+{
+	if (!device_is_ready(buttons)) {
+		return -ENODEV;
+	}
+
+	initialized = true;
+
+	return 0;
+}
