@@ -2,6 +2,7 @@
 #include "display.h"
 #include "flash.h"
 #include "haptic.h"
+#include "light.h"
 #include "press.h"
 
 #include <stdio.h>
@@ -40,6 +41,12 @@ int main(void)
 	ret = haptic_init();
 	if (ret < 0) {
 		printf("Failed to initialize haptic module (%d)\n", ret);
+		return 0;
+	}
+
+	ret = light_init();
+	if (ret < 0) {
+		printf("Failed to initialize light sensor module (%d)\n", ret);
 		return 0;
 	}
 
