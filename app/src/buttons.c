@@ -2,6 +2,7 @@
 
 #include <zephyr/input/input.h>
 #include <zephyr/kernel.h>
+#include <zephyr/pm/device_runtime.h>
 #include <zephyr/shell/shell.h>
 
 static const struct device *const buttons = DEVICE_DT_GET(DT_NODELABEL(buttons));
@@ -19,12 +20,20 @@ INPUT_CALLBACK_DEFINE(buttons, buttons_input_cb, NULL);
 
 static int cmd_buttons_check(const struct shell *sh, size_t argc, char **argv)
 {
+	int ret;
+
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
 	if (!initialized) {
 		shell_error(sh, "Buttons module not initialized");
 		return -EPERM;
+	}
+
+	ret = pm_device_runtime_get(buttons);
+	if (ret < 0) {
+		shell_error(sh, "Failed to get device (%d)", ret);
+		return 0;
 	}
 
 	k_msgq_purge(&input_q);
@@ -69,6 +78,12 @@ static int cmd_buttons_check(const struct shell *sh, size_t argc, char **argv)
 			}
 			break;
 		}
+	}
+
+	ret = pm_device_runtime_put(buttons);
+	if (ret < 0) {
+		shell_error(sh, "Failed to put device (%d)", ret);
+		return 0;
 	}
 
 	return 0;
