@@ -1,1 +1,0 @@
-add_subdirectory_ifdef(CONFIG_SENSOR_BMM350 bmm350)

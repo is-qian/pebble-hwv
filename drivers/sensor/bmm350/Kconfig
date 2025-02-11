@@ -1,7 +1,0 @@
-config SENSOR_BMM350
-	bool "Bosch BMM350 3-axis magnetic sensor"
-	default y
-	depends on DT_HAS_BOSCH_BMM350_ENABLED
-	select I2C
-	help
-	  Enables Bosch BMM350 3-axis magnetic sensor driver.
