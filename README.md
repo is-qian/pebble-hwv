@@ -114,3 +114,9 @@ To get meaningful status reports, you will need to plug the battery to `VBAT`,
 | `hwv light get` | Obtain ALS readings |
 | `hwv mag get` | Obtain magnetometer readings |
 | `hwv press get` | Obtain pressure sensor readings |
+
+### Speaker 
+
+| Command | Description |
+| --- | --- |
+| `hwv speaker play` | Play sound on speaker |

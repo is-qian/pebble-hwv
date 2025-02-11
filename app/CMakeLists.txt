@@ -6,6 +6,7 @@ project(app LANGUAGES C)
 target_sources(
   app
   PRIVATE
+    src/audio_data.c
     src/main.c
     src/ble.c
     src/buttons.c
@@ -17,4 +18,5 @@ target_sources(
     src/light.c
     src/mag.c
     src/press.c
+    src/speaker.c
 )

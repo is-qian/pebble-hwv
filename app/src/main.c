@@ -1,3 +1,4 @@
+#include "speaker.h"
 #include "buttons.h"
 #include "charger.h"
 #include "display.h"
@@ -74,6 +75,12 @@ int main(void)
 	ret = press_init();
 	if (ret < 0) {
 		printf("Failed to initialize pressure sensor module (%d)\n", ret);
+		return 0;
+	}
+
+	ret = speaker_init();
+	if (ret < 0) {
+		printf("Failed to initialize speaker module (%d)\n", ret);
 		return 0;
 	}
 
