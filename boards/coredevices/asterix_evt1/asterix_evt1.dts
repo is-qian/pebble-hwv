@@ -111,6 +111,7 @@
 				regulator-allowed-modes = <NPM1300_LDSW_MODE_LDO>;
 				regulator-initial-mode = <NPM1300_LDSW_MODE_LDO>;
 				regulator-init-microvolt = <1800000>;
+				regulator-boot-on;
 			};
 
 			ldo2: LDO2 {
