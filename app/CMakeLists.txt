@@ -9,6 +9,7 @@ target_sources(
     src/main.c
     src/ble.c
     src/buttons.c
+    src/charger.c
     src/display.c
     src/flash.c
     src/haptic.c

@@ -1,4 +1,5 @@
 #include "buttons.h"
+#include "charger.h"
 #include "display.h"
 #include "flash.h"
 #include "haptic.h"
@@ -25,6 +26,12 @@ int main(void)
 	ret = buttons_init();
 	if (ret < 0) {
 		printf("Failed to initialize buttons module (%d)\n", ret);
+		return 0;
+	}
+
+	ret = charger_init();
+	if (ret < 0) {
+		printf("Failed to initialize charger module (%d)\n", ret);
 		return 0;
 	}
 
