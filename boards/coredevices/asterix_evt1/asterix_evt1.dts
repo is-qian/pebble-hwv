@@ -23,7 +23,7 @@
 		light0 = &opt3001;
 		mag0 = &bmm350;
 		press0 = &bmp390;
-		tap0 = &lsm6dso;
+		imu0 = &lsm6dso;
 		haptic0 = &drv2604;
 		flash0 = &gd25lb255e;
 	};
@@ -155,9 +155,9 @@
 	};
 
 	lsm6dso: imu-sensor@6a {
-		compatible = "st,lsm6dso-tap";
+		compatible = "st,lsm6dso";
 		reg = <0x6a>;
-		int1-gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+		irq-gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
 	};
 
 	bmp390: pressure-sensor@76 {

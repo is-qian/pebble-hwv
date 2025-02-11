@@ -12,6 +12,7 @@ target_sources(
     src/display.c
     src/flash.c
     src/haptic.c
+    src/imu.c
     src/light.c
     src/mag.c
     src/press.c

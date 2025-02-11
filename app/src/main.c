@@ -3,6 +3,7 @@
 #include "flash.h"
 #include "haptic.h"
 #include "light.h"
+#include "imu.h"
 #include "mag.h"
 #include "press.h"
 
@@ -48,6 +49,12 @@ int main(void)
 	ret = light_init();
 	if (ret < 0) {
 		printf("Failed to initialize light sensor module (%d)\n", ret);
+		return 0;
+	}
+
+	ret = imu_init();
+	if (ret < 0) {
+		printf("Failed to initialize IMU module (%d)\n", ret);
 		return 0;
 	}
 
