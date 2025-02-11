@@ -1,0 +1,9 @@
+menuconfig SENSOR_EXT
+	bool "Sensor (external)"
+	default y if SENSOR
+
+if SENSOR_EXT
+
+rsource "bmm350/Kconfig"
+
+endif # SENSOR_EXT

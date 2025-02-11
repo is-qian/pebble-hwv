@@ -3,4 +3,5 @@ rsource "led/Kconfig"
 rsource "display/Kconfig"
 rsource "input/Kconfig"
 rsource "haptic/Kconfig"
+rsource "sensor/Kconfig"
 endmenu
