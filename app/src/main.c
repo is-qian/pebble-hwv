@@ -3,6 +3,7 @@
 #include "flash.h"
 #include "haptic.h"
 #include "light.h"
+#include "mag.h"
 #include "press.h"
 
 #include <stdio.h>
@@ -47,6 +48,12 @@ int main(void)
 	ret = light_init();
 	if (ret < 0) {
 		printf("Failed to initialize light sensor module (%d)\n", ret);
+		return 0;
+	}
+
+	ret = mag_init();
+	if (ret < 0) {
+		printf("Failed to initialize magnetometer module (%d)\n", ret);
 		return 0;
 	}
 

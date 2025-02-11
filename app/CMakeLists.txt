@@ -13,5 +13,6 @@ target_sources(
     src/flash.c
     src/haptic.c
     src/light.c
+    src/mag.c
     src/press.c
 )
