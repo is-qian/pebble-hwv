@@ -10,7 +10,6 @@
 LOG_MODULE_REGISTER(ls013b7dh05, CONFIG_DISPLAY_LOG_LEVEL);
 
 #define LS013B7DH05_WRITE BIT(0)
-#define LS013B7DH05_CLEAR BIT(2)
 
 struct ls013b7dh05_config {
 	struct spi_dt_spec spi;
@@ -23,21 +22,6 @@ struct ls013b7dh05_config {
 	uint8_t *fb;
 	uint32_t fb_size;
 };
-
-static int ls013b7dh05_clear(const struct device *dev)
-{
-	const struct ls013b7dh05_config *config = dev->config;
-	struct spi_buf sbuf;
-	struct spi_buf_set sbufs = {.buffers = &sbuf, .count = 1U};
-	uint8_t buf[2];
-
-	buf[0] = LS013B7DH05_CLEAR;
-	buf[1] = 0U;
-	sbuf.buf = buf;
-	sbuf.len = 1U;
-
-	return spi_write_dt(&config->spi, &sbufs);
-}
 
 static int ls013b7dh05_blanking_on(const struct device *dev)
 {
@@ -99,18 +83,19 @@ static int ls013b7dh05_write(const struct device *dev, uint16_t x, uint16_t y,
 	struct spi_buf sbuf;
 	struct spi_buf_set sbufs = {.buffers = &sbuf, .count = 1U};
 	int ret;
+	const uint8_t *pbuf = buf;
 
-	if (buf != config->fb || desc->height > config->height || desc->height == 0U) {
+	if (buf != config->fb) {
 		LOG_ERR("Unsupported buffer");
 		return -EINVAL;
 	}
 
-	if (x != 0U || y >= config->height) {
+	if (x != 0U || desc->height == 0U || y + desc->height > config->height) {
 		LOG_ERR("Unsupported position");
 		return -EINVAL;
 	}
 
-	uint8_t init[2] = { LS013B7DH05_WRITE, 1U };
+	uint8_t init[2] = {LS013B7DH05_WRITE, y + 1U};
 	sbuf.buf = init;
 	sbuf.len = 2U;
 	ret = spi_write_dt(&config->spi, &sbufs);
@@ -118,8 +103,8 @@ static int ls013b7dh05_write(const struct device *dev, uint16_t x, uint16_t y,
 		goto release;
 	}
 
-	sbuf.buf = (void *)buf;
-	sbuf.len = config->fb_size;
+	sbuf.buf = (void *)&pbuf[y * desc->pitch / 8U];
+	sbuf.len = desc->height * desc->pitch / 8U - 1U;
 	ret = spi_write_dt(&config->spi, &sbufs);
 	if (ret < 0) {
 		goto release;
@@ -202,14 +187,8 @@ static int ls013b7dh05_init(const struct device *dev)
 		return ret;
 	}
 
-	ret = ls013b7dh05_clear(dev);
-	if (ret < 0) {
-		LOG_ERR("Failed to clear display");
-		return ret;
-	}
-
 	for (uint8_t line = 0U; line < (config->height - 1U); line++) {
-		config->fb[line * (config->width / 8U + 2) + config->width / 8 + 1U] = line + 2U;
+		config->fb[line * (config->width / 8U + 2U) + config->width / 8U + 1U] = line + 2U;
 	}
 
 	return 0;
@@ -226,12 +205,13 @@ static const struct display_driver_api ls013b7dh05_api = {
 
 #define LS013B7DH05_DEFINE(n)                                                                      \
 	static uint8_t fb##n[(DT_INST_PROP(n, width) * DT_INST_PROP(n, height)) / 8U +             \
-			     DT_INST_PROP(n, width) * 2U];                                         \
+			     DT_INST_PROP(n, height) * 2U];                                        \
                                                                                                    \
 	static const struct ls013b7dh05_config ls013b7dh05_config_##n = {                          \
 		.spi = SPI_DT_SPEC_INST_GET(n,                                                     \
 					    SPI_OP_MODE_MASTER | SPI_WORD_SET(8U) |                \
-						    SPI_TRANSFER_LSB | SPI_CS_ACTIVE_HIGH | SPI_HOLD_ON_CS | SPI_LOCK_ON,         \
+						    SPI_TRANSFER_LSB | SPI_CS_ACTIVE_HIGH |        \
+						    SPI_HOLD_ON_CS | SPI_LOCK_ON,                  \
 					    0U),                                                   \
 		.disp = GPIO_DT_SPEC_INST_GET(n, disp_gpios),                                      \
 		.extcomin = PWM_DT_SPEC_INST_GET(n),                                               \
@@ -239,8 +219,8 @@ static const struct display_driver_api ls013b7dh05_api = {
 		.width = DT_INST_PROP(n, width),                                                   \
 		.height = DT_INST_PROP(n, height),                                                 \
 		.line_width = DIV_ROUND_UP(DT_INST_PROP(n, width), 8U),                            \
-		.fb = fb##n,                                                               \
-		.fb_size = ARRAY_SIZE(fb##n), \
+		.fb = fb##n,                                                                       \
+		.fb_size = ARRAY_SIZE(fb##n),                                                      \
 	};                                                                                         \
                                                                                                    \
 	DEVICE_DT_INST_DEFINE(n, &ls013b7dh05_init, NULL, NULL, &ls013b7dh05_config_##n,           \
