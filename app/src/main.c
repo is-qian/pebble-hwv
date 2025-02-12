@@ -27,61 +27,51 @@ int main(void)
 	ret = buttons_init();
 	if (ret < 0) {
 		printf("Failed to initialize buttons module (%d)\n", ret);
-		return 0;
 	}
 
 	ret = charger_init();
 	if (ret < 0) {
 		printf("Failed to initialize charger module (%d)\n", ret);
-		return 0;
 	}
 
 	ret = display_init();
 	if (ret < 0) {
 		printf("Failed to initialize display module (%d)\n", ret);
-		return 0;
 	}
 
 	ret = flash_init();
 	if (ret < 0) {
 		printf("Failed to initialize flash module (%d)\n", ret);
-		return 0;
 	}
 
 	ret = haptic_init();
 	if (ret < 0) {
 		printf("Failed to initialize haptic module (%d)\n", ret);
-		return 0;
 	}
 
 	ret = light_init();
 	if (ret < 0) {
 		printf("Failed to initialize light sensor module (%d)\n", ret);
-		return 0;
 	}
 
 	ret = imu_init();
 	if (ret < 0) {
 		printf("Failed to initialize IMU module (%d)\n", ret);
-		return 0;
 	}
 
 	ret = mag_init();
 	if (ret < 0) {
 		printf("Failed to initialize magnetometer module (%d)\n", ret);
-		return 0;
 	}
 
 	ret = press_init();
 	if (ret < 0) {
 		printf("Failed to initialize pressure sensor module (%d)\n", ret);
-		return 0;
 	}
 
 	ret = speaker_init();
 	if (ret < 0) {
 		printf("Failed to initialize speaker module (%d)\n", ret);
-		return 0;
 	}
 
 	return 0;
