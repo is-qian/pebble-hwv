@@ -7,6 +7,7 @@
 #include "light.h"
 #include "imu.h"
 #include "mag.h"
+#include "mic.h"
 #include "press.h"
 
 #include <stdio.h>
@@ -62,6 +63,11 @@ int main(void)
 	ret = mag_init();
 	if (ret < 0) {
 		printf("Failed to initialize magnetometer module (%d)\n", ret);
+	}
+
+	ret = mic_init();
+	if (ret < 0) {
+		printf("Failed to initialize microphone module (%d)\n", ret);
 	}
 
 	ret = press_init();

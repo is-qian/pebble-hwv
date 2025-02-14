@@ -17,6 +17,7 @@ target_sources(
     src/imu.c
     src/light.c
     src/mag.c
+    src/mic.c
     src/press.c
     src/speaker.c
 )

@@ -120,3 +120,9 @@ To get meaningful status reports, you will need to plug the battery to `VBAT`,
 | Command | Description |
 | --- | --- |
 | `hwv speaker play` | Play sound on speaker |
+
+### Microphone 
+
+| Command | Description |
+| --- | --- |
+| `hwv mic capture` | Capture microphone data |
