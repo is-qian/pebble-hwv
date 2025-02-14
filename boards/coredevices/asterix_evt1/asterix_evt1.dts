@@ -27,6 +27,7 @@
 		imu0 = &lsm6dso;
 		haptic0 = &drv2604;
 		flash0 = &gd25lb255e;
+		dmic0 = &pdm0;
 	};
 
 	buttons: buttons {
@@ -192,6 +193,13 @@
 
 &reg1 {
 	regulator-initial-mode = <NRF5X_REG_MODE_LDO>;
+};
+
+&pdm0 {
+	status = "okay";
+	pinctrl-0 = <&pdm0_default>;
+	pinctrl-names = "default";
+	clock-source = "PCLK32M_HFXO";
 };
 
 &qspi {
