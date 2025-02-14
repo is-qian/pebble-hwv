@@ -9,7 +9,7 @@
 #define SAMPLE_RATE_HZ 16000
 #define SAMPLE_BITS    16
 #define TIMEOUT_MS     1000
-#define CAPTURE_MS     100
+#define CAPTURE_MS     200
 #define BLOCK_SIZE     ((SAMPLE_BITS / BITS_PER_BYTE) * (SAMPLE_RATE_HZ * CAPTURE_MS) / 1000)
 #define BLOCK_COUNT    4
 
@@ -53,9 +53,6 @@ static int cmd_mic_capture(const struct shell *sh, size_t argc, char **argv)
 		return -EPERM;
 	}
 
-	shell_print(sh, "PCM output rate: %u, channels: %u", cfg.streams[0].pcm_rate,
-		    cfg.channel.req_num_chan);
-
 	ret = dmic_configure(dmic, &cfg);
 	if (ret < 0) {
 		shell_error(sh, "Failed to configure DMIC(%d)", ret);
@@ -74,15 +71,19 @@ static int cmd_mic_capture(const struct shell *sh, size_t argc, char **argv)
 		return ret;
 	}
 
-	shell_print(sh, "DMIC read: %u bytes", size);
-
-	k_mem_slab_free(&mem_slab, buffer);
-
 	ret = dmic_trigger(dmic, DMIC_TRIGGER_STOP);
 	if (ret < 0) {
 		shell_error(sh, "STOP trigger failed (%d)", ret);
 		return ret;
 	}
+
+	shell_print(sh, "S");
+	for (uint32_t i = 0U; i < size / 2; i++) {
+		shell_print(sh, "%d", ((int16_t *)buffer)[i]);
+	}
+	shell_print(sh, "E");
+
+	k_mem_slab_free(&mem_slab, buffer);
 
 	return 0;
 }

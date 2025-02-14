@@ -126,3 +126,14 @@ To get meaningful status reports, you will need to plug the battery to `VBAT`,
 | Command | Description |
 | --- | --- |
 | `hwv mic capture` | Capture microphone data |
+
+To verify that captured data makes sense, it is recommended to use a tone
+generator (find one in any App store) and capture the data using the
+`scripts/wavgen.py` tool, like this:
+
+```shell
+python scripts/wavgen.py -p /dev/$PORT -o test.wav
+```
+
+Then listen the generated WAV file in loop mode using any audio player. You
+should hear the same tone you generated.
