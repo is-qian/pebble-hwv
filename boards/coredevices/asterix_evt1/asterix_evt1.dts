@@ -6,6 +6,7 @@
 
 #include <zephyr/dt-bindings/input/input-event-codes.h>
 #include <zephyr/dt-bindings/regulator/npm1300.h>
+#include <zephyr/dt-bindings/sensor/lsm6dso.h>
 
 / {
 	model = "Pebble Asterix EVT1";
@@ -173,6 +174,8 @@
 		compatible = "st,lsm6dso";
 		reg = <0x6a>;
 		irq-gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+		accel-pm = <LSM6DSO_DT_XL_ULP_MODE>;
+		gyro-pm = <LSM6DSO_DT_GY_NORMAL_MODE>;
 	};
 
 	bmp390: pressure-sensor@76 {
