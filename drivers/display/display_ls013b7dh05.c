@@ -187,6 +187,16 @@ static int ls013b7dh05_init(const struct device *dev)
 		return ret;
 	}
 
+	ret = pwm_set_pulse_dt(&config->extcomin, 0U);
+	if (ret < 0) {
+		return ret;
+	}
+
+	ret = led_off(config->backlight, 0);
+	if (ret < 0) {
+		return ret;
+	}
+
 	for (uint8_t line = 0U; line < (config->height - 1U); line++) {
 		config->fb[line * (config->width / 8U + 2U) + config->width / 8U + 1U] = line + 2U;
 	}
