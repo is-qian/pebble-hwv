@@ -1,4 +1,5 @@
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/pm/device.h>
 #include <zephyr/shell/shell.h>
 
 static const struct device *const mag = DEVICE_DT_GET(DT_ALIAS(mag0));
@@ -7,7 +8,7 @@ static bool initialized;
 static int cmd_mag_get(const struct shell *sh, size_t argc, char **argv)
 {
 	int err;
-	struct sensor_value val_x, val_y, val_z;
+	struct sensor_value val, val_x, val_y, val_z;
 
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -15,6 +16,26 @@ static int cmd_mag_get(const struct shell *sh, size_t argc, char **argv)
 	if (!initialized) {
 		shell_error(sh, "Magure sensor module not initialized");
 		return -EPERM;
+	}
+
+	err = pm_device_action_run(mag, PM_DEVICE_ACTION_RESUME);
+	if (err < 0) {
+		return err;
+	}
+
+	val.val1 = 25;
+	val.val2 = 0;
+	err = sensor_attr_set(mag, SENSOR_CHAN_MAGN_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &val);
+	if (err < 0) {
+		return err;
+	}
+
+	/* "Normal" mode */
+	val.val1 = 1;
+	val.val2 = 0;
+	err = sensor_attr_set(mag, SENSOR_CHAN_MAGN_XYZ, SENSOR_ATTR_OVERSAMPLING, &val);
+	if (err < 0) {
+		return err;
 	}
 
 	err = sensor_sample_fetch(mag);
@@ -55,23 +76,12 @@ SHELL_SUBCMD_ADD((hwv), mag, &sub_mag_cmds, "Magnetic sensor", NULL, 0, 0);
 int mag_init(void)
 {
 	int ret;
-	struct sensor_value val;
 
 	if (!device_is_ready(mag)) {
 		return -ENODEV;
 	}
 
-	val.val1 = 25;
-	val.val2 = 0;
-	ret = sensor_attr_set(mag, SENSOR_CHAN_MAGN_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &val);
-	if (ret < 0) {
-		return ret;
-	}
-
-	/* "Normal" mode */
-	val.val1 = 1;
-	val.val2 = 0;
-	ret = sensor_attr_set(mag, SENSOR_CHAN_MAGN_XYZ, SENSOR_ATTR_OVERSAMPLING, &val);
+	ret = pm_device_action_run(mag, PM_DEVICE_ACTION_SUSPEND);
 	if (ret < 0) {
 		return ret;
 	}
