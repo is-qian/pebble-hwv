@@ -3,6 +3,7 @@
 #include <zephyr/drivers/flash.h>
 #include <zephyr/drivers/regulator.h>
 #include <zephyr/kernel.h>
+#include <zephyr/pm/device.h>
 #include <zephyr/shell/shell.h>
 
 static const struct device *const flash = DEVICE_DT_GET(DT_ALIAS(flash0));
@@ -21,15 +22,24 @@ static int cmd_flash_id(const struct shell *sh, size_t argc, char **argv)
 		return -EPERM;
 	}
 
+	ret = pm_device_action_run(flash, PM_DEVICE_ACTION_RESUME);
+	if (ret < 0) {
+		shell_error(sh, "Failed to resume flash (%d)", ret);
+		return ret;
+	}
+
 	ret = flash_read_jedec_id(flash, id);
 	if (ret < 0) {
 		shell_error(sh, "Failed to read flash ID (%d)", ret);
-		return ret;
+		goto end;
 	}
 
 	shell_print(sh, "Flash ID: %02x %02x %02x", id[0], id[1], id[2]);
 
-	return 0;
+end:
+	(void)pm_device_action_run(flash, PM_DEVICE_ACTION_SUSPEND);
+
+	return ret;
 }
 
 static int cmd_flash_erase(const struct shell *sh, size_t argc, char **argv)
@@ -50,21 +60,30 @@ static int cmd_flash_erase(const struct shell *sh, size_t argc, char **argv)
 
 	addr = strtoul(argv[1], NULL, 0);
 
+	ret = pm_device_action_run(flash, PM_DEVICE_ACTION_RESUME);
+	if (ret < 0) {
+		shell_error(sh, "Failed to resume flash (%d)", ret);
+		return ret;
+	}
+
 	ret = flash_get_page_info_by_offs(flash, addr, &info);
 	if (ret < 0) {
 		shell_error(sh, "Could not determine page size (%d)", ret);
-		return ret;
+		goto end;
 	}
 
 	ret = flash_erase(flash, addr, info.size);
 	if (ret < 0) {
 		shell_error(sh, "Failed to erase flash (%d)", ret);
-		return ret;
+		goto end;
 	}
 
 	shell_print(sh, "Erased %d bytes at 0x%08x", info.size, addr);
 
-	return 0;
+end:
+	(void)pm_device_action_run(flash, PM_DEVICE_ACTION_SUSPEND);
+
+	return ret;
 }
 
 static int cmd_flash_read(const struct shell *sh, size_t argc, char **argv)
@@ -87,13 +106,19 @@ static int cmd_flash_read(const struct shell *sh, size_t argc, char **argv)
 	addr = strtoul(argv[1], NULL, 0);
 	len = strtoul(argv[2], NULL, 0);
 
+	ret = pm_device_action_run(flash, PM_DEVICE_ACTION_RESUME);
+	if (ret < 0) {
+		shell_error(sh, "Failed to resume flash (%d)", ret);
+		return ret;
+	}
+
 	while (len > 0U) {
 		size_t rd = MIN(len, sizeof(buf));
 
 		ret = flash_read(flash, addr, buf, rd);
 		if (ret < 0) {
 			shell_error(sh, "Failed to read from flash (%d)", ret);
-			return ret;
+			goto end;
 		}
 
 		shell_hexdump_line(sh, addr, buf, rd);
@@ -102,7 +127,10 @@ static int cmd_flash_read(const struct shell *sh, size_t argc, char **argv)
 		len -= rd;
 	}
 
-	return 0;
+end:
+	(void)pm_device_action_run(flash, PM_DEVICE_ACTION_SUSPEND);
+
+	return ret;
 }
 
 static int cmd_flash_write(const struct shell *sh, size_t argc, char **argv)
@@ -135,18 +163,25 @@ static int cmd_flash_write(const struct shell *sh, size_t argc, char **argv)
 		buf[i] = strtoul(&argv[2][i * 2], NULL, 16);
 	}
 
-	ret = flash_write(flash, addr, buf, data_len);
+	ret = pm_device_action_run(flash, PM_DEVICE_ACTION_RESUME);
 	if (ret < 0) {
-		shell_error(sh, "Failed to write to flash (%d)", ret);
+		shell_error(sh, "Failed to resume flash (%d)", ret);
 		k_free(buf);
 		return ret;
 	}
 
+	ret = flash_write(flash, addr, buf, data_len);
+	if (ret < 0) {
+		shell_error(sh, "Failed to write to flash (%d)", ret);
+	} else {
+		shell_print(sh, "Wrote %d bytes to 0x%08x", data_len, addr);
+	}
+
 	k_free(buf);
 
-	shell_print(sh, "Wrote %d bytes to 0x%08x", data_len, addr);
+	(void)pm_device_action_run(flash, PM_DEVICE_ACTION_SUSPEND);
 
-	return 0;
+	return ret;
 }
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
@@ -160,8 +195,15 @@ SHELL_SUBCMD_ADD((hwv), flash, &sub_flash_cmds, "Flash", NULL, 0, 0);
 
 int flash_init(void)
 {
+	int ret;
+
 	if (!device_is_ready(flash)) {
 		return -ENODEV;
+	}
+
+	ret = pm_device_action_run(flash, PM_DEVICE_ACTION_SUSPEND);
+	if (ret < 0) {
+		return ret;
 	}
 
 	initialized = true;
