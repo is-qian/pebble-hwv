@@ -78,6 +78,11 @@ static int lm3508_init(const struct device *dev)
 		return ret;
 	}
 
+	ret = pwm_set_pulse_dt(&config->pwm, 0U);
+	if (ret < 0) {
+		return ret;
+	}
+
 	return 0;
 }
 
