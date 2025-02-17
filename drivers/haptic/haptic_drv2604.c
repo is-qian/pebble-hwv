@@ -34,6 +34,13 @@ static int drv2604_configure(const struct device *dev, uint8_t ampl)
 	uint8_t val;
 	int ret;
 
+	val = FIELD_PREP(DRV2604_MODE_STANDBY, ampl > 0U ? 0U : 1U);
+	ret = i2c_reg_update_byte_dt(&config->i2c, DRV2604_MODE, DRV2604_MODE_STANDBY, val);
+	if (ret < 0) {
+		LOG_ERR("Could not set active mode (%d)", ret);
+		return ret;
+	}
+
 	val = FIELD_PREP(DRV2604_RTPI_RTP_INPUT, ampl * DRV2604_RTPI_RTP_INPUT_MAX / 100U);
 	ret = i2c_reg_write_byte_dt(&config->i2c, DRV2604_RTPI, val);
 	if (ret < 0) {
@@ -77,7 +84,7 @@ static int drv2604_init(const struct device *dev)
 		return ret;
 	}
 
-	val = FIELD_PREP(DRV2604_MODE_STANDBY, 0U) |
+	val = FIELD_PREP(DRV2604_MODE_STANDBY, 1U) |
 	      FIELD_PREP(DRV2604_MODE_MODE, DRV2604_MODE_MODE_RTP);
 	ret = i2c_reg_write_byte_dt(&config->i2c, DRV2604_MODE, val);
 	if (ret < 0) {
