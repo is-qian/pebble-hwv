@@ -30,7 +30,17 @@ cd pebble-hwv
 west build -b $BOARD_TARGET app
 ```
 
-where `$BOARD_TARGET` is the board target, e.g. `asterix_evt1`.
+where `$BOARD_TARGET` is the board target, e.g. `asterix_evt1`. To perform
+low-power measurements it is advised to compile with serial disabled using the
+`no-serial.conf` overlay, i.e.
+
+```shell
+west build -b $BOARD_TARGET app -- -DOVERLAY_CONFIG="no-serial.conf"
+```
+
+When disabling serial, RTT may come handy as it will only consume power when
+RTT is attached. For this purpose, you can append the `rtt.conf` to the overlay
+list.
 
 Once you have built the application, run the following command to flash it:
 
@@ -115,13 +125,13 @@ To get meaningful status reports, you will need to plug the battery to `VBAT`,
 | `hwv mag get` | Obtain magnetometer readings |
 | `hwv press get` | Obtain pressure sensor readings |
 
-### Speaker 
+### Speaker
 
 | Command | Description |
 | --- | --- |
 | `hwv speaker play` | Play sound on speaker |
 
-### Microphone 
+### Microphone
 
 | Command | Description |
 | --- | --- |
