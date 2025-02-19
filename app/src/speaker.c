@@ -116,6 +116,8 @@ static int i2s_setup(void)
 
 static int cmd_speaker_play(const struct shell *sh, size_t argc, char **argv)
 {
+	int ret;
+
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
@@ -124,9 +126,17 @@ static int cmd_speaker_play(const struct shell *sh, size_t argc, char **argv)
 		return -EPERM;
 	}
 
-	for (int i = 0; i < 10; i++) {
-		int ret;
+	ret = codec_setup();
+	if (ret < 0) {
+		return ret;
+	}
 
+	ret = i2s_setup();
+	if (ret < 0) {
+		return ret;
+	}
+
+	for (int i = 0; i < 10; i++) {
 		ret = i2s_trigger(i2s, I2S_DIR_TX, I2S_TRIGGER_START);
 		if (ret < 0) {
 			return ret;
@@ -158,24 +168,12 @@ SHELL_SUBCMD_ADD((hwv), speaker, &sub_speaker_cmds, "Speaker", NULL, 0, 0);
 
 int speaker_init(void)
 {
-	int ret;
-
 	if (!i2c_is_ready_dt(&codec)) {
 		return -ENODEV;
 	}
 
 	if (!device_is_ready(i2s)) {
 		return -ENODEV;
-	}
-
-	ret = codec_setup();
-	if (ret < 0) {
-		return ret;
-	}
-
-	ret = i2s_setup();
-	if (ret < 0) {
-		return ret;
 	}
 
 	initialized = true;
