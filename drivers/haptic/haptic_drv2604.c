@@ -11,6 +11,7 @@ LOG_MODULE_REGISTER(drv2604, CONFIG_HAPTIC_LOG_LEVEL);
 
 #define DRV2604_MODE     0x01
 #define DRV2604_RTPI     0x02
+#define DRV2604_FEEDBACK 0x1A
 #define DRV2604_CONTROL3 0x1D
 
 #define DRV2604_MODE_DEV_RESET BIT(7)
@@ -23,6 +24,8 @@ LOG_MODULE_REGISTER(drv2604, CONFIG_HAPTIC_LOG_LEVEL);
 
 #define DRV2604_RTPI_RTP_INPUT_MAX 0x7FU
 
+#define DRV2604_FEEDBACK_LRA BIT(7)
+
 struct drv2604_config {
 	struct i2c_dt_spec i2c;
 	struct gpio_dt_spec en;
@@ -34,10 +37,28 @@ static int drv2604_configure(const struct device *dev, uint8_t ampl)
 	uint8_t val;
 	int ret;
 
-	val = FIELD_PREP(DRV2604_MODE_STANDBY, ampl > 0U ? 0U : 1U);
-	ret = i2c_reg_update_byte_dt(&config->i2c, DRV2604_MODE, DRV2604_MODE_STANDBY, val);
+	if (ampl == 0U) {
+		val = FIELD_PREP(DRV2604_MODE_STANDBY, 1U);
+		ret = i2c_reg_write_byte_dt(&config->i2c, DRV2604_MODE, val);
+		if (ret < 0) {
+			LOG_ERR("Could not set active mode (%d)", ret);
+			return ret;
+		}
+
+		return 0;
+	}
+
+	val = FIELD_PREP(DRV2604_MODE_MODE, DRV2604_MODE_MODE_RTP);
+	ret = i2c_reg_write_byte_dt(&config->i2c, DRV2604_MODE, val);
 	if (ret < 0) {
 		LOG_ERR("Could not set active mode (%d)", ret);
+		return ret;
+	}
+
+	val = FIELD_PREP(DRV2604_FEEDBACK_LRA, 1U);
+	ret = i2c_reg_update_byte_dt(&config->i2c, DRV2604_FEEDBACK, DRV2604_FEEDBACK_LRA, val);
+	if (ret < 0) {
+		LOG_ERR("Could not set LRA mode (%d)", ret);
 		return ret;
 	}
 
@@ -84,8 +105,7 @@ static int drv2604_init(const struct device *dev)
 		return ret;
 	}
 
-	val = FIELD_PREP(DRV2604_MODE_STANDBY, 1U) |
-	      FIELD_PREP(DRV2604_MODE_MODE, DRV2604_MODE_MODE_RTP);
+	val = FIELD_PREP(DRV2604_MODE_STANDBY, 1U);
 	ret = i2c_reg_write_byte_dt(&config->i2c, DRV2604_MODE, val);
 	if (ret < 0) {
 		LOG_ERR("Could not set mode (%d)", ret);
