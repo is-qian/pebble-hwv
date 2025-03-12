@@ -61,7 +61,7 @@
 
 	lm3508: backlight {
 		compatible = "ti,lm3508";
-		en-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+		en-gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;
 		pwms = <&pwm0 0 PWM_HZ(256) PWM_POLARITY_NORMAL>;
 	};
 };
