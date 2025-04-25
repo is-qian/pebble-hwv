@@ -4,11 +4,12 @@
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device_runtime.h>
 #include <zephyr/shell/shell.h>
+#include "buttons.h"
 
 static const struct device *const buttons = DEVICE_DT_GET(DT_ALIAS(buttons));
 K_MSGQ_DEFINE(input_q, sizeof(struct input_event), 10, 1);
 static bool initialized;
-
+bool buttons_flag = false;
 static void buttons_input_cb(struct input_event *evt, void *user_data)
 {
 	ARG_UNUSED(user_data);
@@ -42,7 +43,7 @@ static int cmd_buttons_check(const struct shell *sh, size_t argc, char **argv)
 		int ret;
 		struct input_event evt;
 
-		ret = k_msgq_get(&input_q, &evt, K_SECONDS(5));
+		ret = k_msgq_get(&input_q, &evt, K_FOREVER);
 		if (ret == -EAGAIN) {
 			shell_error(sh, "No input received");
 			return 0;
@@ -51,6 +52,7 @@ static int cmd_buttons_check(const struct shell *sh, size_t argc, char **argv)
 		switch (evt.code) {
 		case INPUT_KEY_BACK:
 			if (evt.value == 1) {
+				buttons_flag = true;
 				shell_print(sh, "Back button pressed");
 			} else {
 				shell_print(sh, "Back button released");
@@ -58,6 +60,7 @@ static int cmd_buttons_check(const struct shell *sh, size_t argc, char **argv)
 			break;
 		case INPUT_KEY_UP:
 			if (evt.value == 1) {
+				buttons_flag = false;
 				shell_print(sh, "Up button pressed");
 			} else {
 				shell_print(sh, "Up button released");
