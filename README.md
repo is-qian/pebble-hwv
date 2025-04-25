@@ -30,17 +30,7 @@ cd pebble-hwv
 west build -b $BOARD_TARGET app
 ```
 
-where `$BOARD_TARGET` is the board target, e.g. `asterix_evt1`. To perform
-low-power measurements it is advised to compile with serial disabled using the
-`no-serial.conf` overlay, i.e.
-
-```shell
-west build -b $BOARD_TARGET app -- -DOVERLAY_CONFIG="no-serial.conf"
-```
-
-When disabling serial, RTT may come handy as it will only consume power when
-RTT is attached. For this purpose, you can append the `rtt.conf` to the overlay
-list.
+where `$BOARD_TARGET` is the board target, e.g. `asterix_evt1`.
 
 Once you have built the application, run the following command to flash it:
 
@@ -147,3 +137,24 @@ python scripts/wavgen.py -p /dev/$PORT -o test.wav
 
 Then listen the generated WAV file in loop mode using any audio player. You
 should hear the same tone you generated.
+
+## Low power measurement tips
+
+To perform low-power measurements it is advised to compile with serial disabled
+using the `no-serial.conf` overlay, i.e.
+
+```shell
+west build -b $BOARD_TARGET app -- -DOVERLAY_CONFIG="no-serial.conf"
+```
+
+Without serial, you may also want to hardcode certain commands. You can do it
+like this at the end of `main`:
+
+```c
+shell_execute_cmd(NULL, "hwv ble on");
+shell_execute_cmd(NULL, "hwv display on");
+shell_execute_cmd(NULL, "hwv display vpattern");
+```
+
+RTT may also come handy as it will only consume power when RTT is attached. For
+this purpose, you can append the `rtt.conf` to the overlay list.
