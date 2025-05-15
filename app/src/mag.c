@@ -1,92 +1,122 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/pm/device.h>
 #include <zephyr/shell/shell.h>
+#include <zephyr/drivers/i2c.h>
+#include "mag.h"
 
-static const struct device *const mag = DEVICE_DT_GET(DT_ALIAS(mag0));
+static const struct device *const i2c = DEVICE_DT_GET(DT_NODELABEL(i2c1));
 static bool initialized;
+
+int get_mmc5603nj_date(double *mag_values)
+{
+    if (!device_is_ready(i2c)) {
+        return -ENODEV;
+    }
+
+    // reset magnetic sensor
+    uint8_t cmd[2] = {MMC5603NJ_ADDR_INTCTRL1, 0x80};
+    int ret = i2c_write(i2c, cmd, sizeof(cmd), MMC5603NJ_I2C_ADDR);
+    if (ret < 0) {
+        return ret;
+    }
+
+    k_msleep(10);
+
+    // set ODR to 100Hz
+    uint8_t config[] = {
+        MMC5603NJ_ADDR_ODR, 0xFF,
+        MMC5603NJ_ADDR_INTCTRL0, 0xA0,
+        MMC5603NJ_ADDR_INTCTRL1, 0x03,
+        MMC5603NJ_ADDR_INTCTRL2, 0x10
+    };
+    
+    for (int i = 0; i < sizeof(config); i += 2) {
+        cmd[0] = config[i];
+        cmd[1] = config[i + 1];
+        ret = i2c_write(i2c, cmd, sizeof(cmd), MMC5603NJ_I2C_ADDR);
+        if (ret < 0) {
+            return ret;
+        }
+    }
+
+	// set interrupt control
+	cmd[0] = MMC5603NJ_ADDR_INTCTRL0;
+	cmd[1] = 0x21;
+	ret = i2c_write(i2c, cmd, sizeof(cmd), MMC5603NJ_I2C_ADDR);
+	if (ret < 0) {
+		return ret;
+	}
+
+	// wait for data ready
+	uint8_t status;
+	uint8_t status_reg = MMC5603NJ_ADDR_STATUS1;
+	uint32_t timeout = 100; // 100ms timeout
+
+	do {
+		ret = i2c_write_read(i2c, MMC5603NJ_I2C_ADDR, &status_reg, 1, &status, 1);
+		if (ret < 0) {
+			return ret;
+		}
+		k_msleep(1);
+		timeout--;
+	} while (!(status & 0x01) && timeout > 0);
+	if (timeout == 0) 
+		return -ETIMEDOUT;
+
+    // read magnetic data
+    uint8_t mag_data[9];
+    uint8_t reg = MMC5603NJ_ADDR_XOUT0;
+    ret = i2c_write_read(i2c, MMC5603NJ_I2C_ADDR, &reg, 1, mag_data, 9);
+    if (ret < 0) {
+        return ret;
+    }
+	printk("mag_data: %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	       mag_data[0], mag_data[1], mag_data[2], mag_data[3],
+	       mag_data[4], mag_data[5], mag_data[6], mag_data[7],
+	       mag_data[8]);
+    // convert to gauss 
+    int32_t mag_x = ((mag_data[0] << 12) | (mag_data[1] << 4) | (mag_data[6])) - 524288;
+    int32_t mag_y = ((mag_data[2] << 12) | (mag_data[3] << 4) | (mag_data[7])) - 524288;
+    int32_t mag_z = ((mag_data[4] << 12) | (mag_data[5] << 4) | (mag_data[8])) - 524288;
+
+    mag_values[0] = (mag_x * 625) / 10000; // X-axis
+    mag_values[1] = (mag_y * 625) / 10000; // Y-axis
+    mag_values[2] = (mag_z * 625) / 10000; // Z-axis
+
+    return 0;
+}
 
 static int cmd_mag_get(const struct shell *sh, size_t argc, char **argv)
 {
-	int err;
-	struct sensor_value val, val_x, val_y, val_z;
+    int err;
+    double mag_data[3];
 
-	ARG_UNUSED(argc);
-	ARG_UNUSED(argv);
+    err = get_mmc5603nj_date(mag_data);
+    if (err < 0) {
+        shell_error(sh, "Failed to get sensor data (%d)", err);
+        return err;
+    }
 
-	if (!initialized) {
-		shell_error(sh, "Magure sensor module not initialized");
-		return -EPERM;
-	}
+    shell_print(sh, "Magnetic field (gauss): %f, %f, %f",
+                mag_data[0],
+                mag_data[1],
+                mag_data[2]);
 
-	err = pm_device_action_run(mag, PM_DEVICE_ACTION_RESUME);
-	if (err < 0) {
-		return err;
-	}
-
-	val.val1 = 25;
-	val.val2 = 0;
-	err = sensor_attr_set(mag, SENSOR_CHAN_MAGN_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &val);
-	if (err < 0) {
-		return err;
-	}
-
-	/* "Normal" mode */
-	val.val1 = 1;
-	val.val2 = 0;
-	err = sensor_attr_set(mag, SENSOR_CHAN_MAGN_XYZ, SENSOR_ATTR_OVERSAMPLING, &val);
-	if (err < 0) {
-		return err;
-	}
-
-	err = sensor_sample_fetch(mag);
-	if (err < 0) {
-		shell_error(sh, "Failed to fetch sensor data (%d)", err);
-		return 0;
-	}
-
-	err = sensor_channel_get(mag, SENSOR_CHAN_MAGN_X, &val_x);
-	if (err < 0) {
-		shell_error(sh, "Failed to get X magnetic field data (%d)", err);
-		return 0;
-	}
-
-	err = sensor_channel_get(mag, SENSOR_CHAN_MAGN_Y, &val_y);
-	if (err < 0) {
-		shell_error(sh, "Failed to get Y magnetic field data (%d)", err);
-		return 0;
-	}
-
-	err = sensor_channel_get(mag, SENSOR_CHAN_MAGN_Z, &val_z);
-	if (err < 0) {
-		shell_error(sh, "Failed to get Z magnetic field data (%d)", err);
-		return 0;
-	}
-
-	shell_print(sh, "Magnetic field (gauss): %.6f, %.6f, %.6f", val_x.val1 + val_x.val2 / 100.0,
-		    val_y.val1 + val_y.val2 / 100.0, val_z.val1 + val_z.val2 / 100.0);
-
-	return 0;
+    return 0;
 }
 
-SHELL_STATIC_SUBCMD_SET_CREATE(sub_mag_cmds, SHELL_CMD(get, NULL, "Get sensor data", cmd_mag_get),
-			       SHELL_SUBCMD_SET_END);
+SHELL_STATIC_SUBCMD_SET_CREATE(sub_mag_cmds,
+                              SHELL_CMD(get, NULL, "Get sensor data", cmd_mag_get),
+                              SHELL_SUBCMD_SET_END);
 
 SHELL_SUBCMD_ADD((hwv), mag, &sub_mag_cmds, "Magnetic sensor", NULL, 0, 0);
 
 int mag_init(void)
 {
-	int ret;
+    if (!device_is_ready(i2c)) {
+        return -ENODEV;
+    }
 
-	if (!device_is_ready(mag)) {
-		return -ENODEV;
-	}
-
-	ret = pm_device_action_run(mag, PM_DEVICE_ACTION_SUSPEND);
-	if (ret < 0) {
-		return ret;
-	}
-
-	initialized = true;
-
-	return 0;
+    initialized = true;
+    return 0;
 }
