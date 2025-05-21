@@ -2,6 +2,8 @@
 
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/pm/device.h>
 #include <zephyr/audio/dmic.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/sys/util.h>
@@ -14,6 +16,9 @@
 #define BLOCK_COUNT    4
 
 static const struct device *const dmic = DEVICE_DT_GET(DT_ALIAS(dmic0));
+static const struct device *const flash = DEVICE_DT_GET(DT_ALIAS(flash0));
+
+static bool initialized;
 
 K_MEM_SLAB_DEFINE_STATIC(mem_slab, BLOCK_SIZE, BLOCK_COUNT, 4);
 
@@ -39,14 +44,10 @@ static struct dmic_cfg cfg = {
 			.req_num_chan = 1,
 		},
 };
-#include <zephyr/drivers/flash.h>
-#include <zephyr/pm/device.h>
-static const struct device *const flash = DEVICE_DT_GET(DT_ALIAS(flash0));
-static bool initialized;
 
 static int cmd_mic_capture(const struct shell *sh, size_t argc, char **argv)
 {
-	int ret,time = 1;
+	int ret, time = 1;
 	void *buffer;
 	uint32_t size;
 	struct flash_pages_info info;
