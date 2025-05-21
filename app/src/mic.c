@@ -79,7 +79,7 @@ static int cmd_mic_capture(const struct shell *sh, size_t argc, char **argv)
 		ret = dmic_read(dmic, 0, &buffer, &size, TIMEOUT_MS);
 		if (ret < 0) {
 			shell_error(sh, "DMIC read failed (%d)", ret);
-			return ret;
+			goto err;
 		}
 		ret = flash_write(flash, addr, buffer, size);
 		addr += size;
@@ -98,6 +98,11 @@ static int cmd_mic_capture(const struct shell *sh, size_t argc, char **argv)
 	shell_print(sh, "E");
 	(void)pm_device_action_run(flash, PM_DEVICE_ACTION_SUSPEND);
 	return 0;
+
+err:
+	k_mem_slab_free(&mem_slab, buffer);
+	dmic_trigger(dmic, DMIC_TRIGGER_STOP);
+	return ret;
 }
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_mic_cmds,
