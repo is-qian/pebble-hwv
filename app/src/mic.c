@@ -68,13 +68,13 @@ static int cmd_mic_capture(const struct shell *sh, size_t argc, char **argv)
 	ret = dmic_configure(dmic, &cfg);
 	if (ret < 0) {
 		shell_error(sh, "Failed to configure DMIC(%d)", ret);
-		return ret;
+		goto suspend_flash;
 	}
 
 	ret = dmic_trigger(dmic, DMIC_TRIGGER_START);
 	if (ret < 0) {
 		shell_error(sh, "START trigger failed (%d)", ret);
-		return ret;
+		goto suspend_flash;
 	}
 	for (int i = 0; i < time; i++) {
 		ret = dmic_read(dmic, 0, &buffer, &size, TIMEOUT_MS);
@@ -89,7 +89,7 @@ static int cmd_mic_capture(const struct shell *sh, size_t argc, char **argv)
 	ret = dmic_trigger(dmic, DMIC_TRIGGER_STOP);
 	if (ret < 0) {
 		shell_error(sh, "STOP trigger failed (%d)", ret);
-		return ret;
+		goto suspend_flash;
 	}
 	shell_print(sh, "S");
 	for (int i = 0; i < addr / 2; i++) {
@@ -103,6 +103,8 @@ static int cmd_mic_capture(const struct shell *sh, size_t argc, char **argv)
 err:
 	k_mem_slab_free(&mem_slab, buffer);
 	dmic_trigger(dmic, DMIC_TRIGGER_STOP);
+suspend_flash:
+	(void)pm_device_action_run(flash, PM_DEVICE_ACTION_SUSPEND);
 	return ret;
 }
 
